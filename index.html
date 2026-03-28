@@ -1,29 +1,101 @@
 <!DOCTYPE html>
-<html>
-<head><title>GASテスト</title></head>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NW Learning Platform</title>
+    <style>
+        /* 全体のデザイン設定 */
+        body {
+            background-color: #121212; /* ダークモード */
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #03dac6;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .menu-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* ボタンのデザイン */
+        .menu-card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* マウスを乗せた時の動き */
+        .menu-card:hover {
+            border-color: #03dac6;
+            background-color: #252525;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .menu-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: #bb86fc;
+        }
+
+        .menu-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+    </style>
+</head>
 <body>
-  <h1>データ送信テスト</h1>
-  <button onclick="send()">スプレッドシートに保存</button>
 
-  <script>
-    async function send() {
-      // ★ここに、メモしたGASのウェブアプリURLを貼り付けてください
-      const url = "https://script.google.com/macros/s/AKfycbxkYt0fIzpBRHNa5XYQHdcSL1YO9zDVqF-ZrV2p6ntEeJ5w-9Yi7irOoC4WVLD4XjcFGA/exec";
-      
-      const data = {
-        username: "テストユーザー",
-        score: "100%"
-      };
+    <h1>NW 演習プラットフォーム</h1>
 
-      // GASにデータを飛ばす魔法の呪文
-      fetch(url, {
-        method: "POST",
-        mode: "no-cors", // これを入れるとエラーが出にくくなります
-        body: JSON.stringify(data)
-      });
-      
-      alert("送信しました！スプレッドシートを確認してください。");
-    }
-  </script>
+    <div class="menu-container">
+        <a href="quiz.html" class="menu-card">
+            <h2>択一問題</h2>
+            <p>過去問をベースにした4択クイズ</p>
+        </a>
+
+        <a href="drag.html" class="menu-card">
+            <h2>ドラッグ＆ドロップ</h2>
+            <p>構成図やサブネットの仕分け演習</p>
+        </a>
+
+        <a href="terminal.html" class="menu-card">
+            <h2>ターミナル演習</h2>
+            <p>Ciscoコマンドライン・シミュレータ</p>
+        </a>
+    </div>
+
+    <div class="footer">
+        Connected to Google Sheets API
+    </div>
+
 </body>
 </html>
