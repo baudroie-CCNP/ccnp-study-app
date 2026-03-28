@@ -1,65 +1,136 @@
-let allQuestions = [];
-let currentIndex = 0;
-let foundCorrects = []; // 今の問で「見つけた正解」を貯めるリスト
-
-async function loadQuestions() {
-    const response = await fetch(GAS_URL);
-    allQuestions = await response.json();
-    displayQuestion();
-}
-
-function displayQuestion() {
-    if (currentIndex >= allQuestions.length) {
-        document.getElementById('question').innerText = "全問終了です！お疲れ様でした。";
-        document.getElementById('options').innerHTML = "";
-        return;
-    }
-
-    const q = allQuestions[currentIndex];
-    foundCorrects = []; // 状態をリセット
-    
-    document.getElementById('question').innerText = `第${currentIndex + 1}問: ${q.question}（正解を ${q.answers.length} つ選んでください）`;
-    
-    const optionsDiv = document.getElementById('options');
-    optionsDiv.innerHTML = "";
-    document.getElementById('result').innerText = "";
-
-    q.options.forEach((opt) => {
-        const btn = document.createElement('button');
-        btn.innerText = opt;
-        btn.onclick = () => checkAnswer(btn, opt, q.answers);
-        optionsDiv.appendChild(btn);
-    });
-}
-
-function checkAnswer(btn, selected, correctList) {
-    const resultDiv = document.getElementById('result');
-    
-    // 1. 選んだものが正解リストに含まれているか
-    if (correctList.includes(selected)) {
-        // すでに選んだ正解をまた押した場合は何もしない
-        if (foundCorrects.includes(selected)) return;
-
-        foundCorrects.push(selected); // 見つけたリストに追加
-        btn.style.backgroundColor = "#03dac6"; // 正解の色に変える
-        btn.disabled = true; // 二度押し防止
-
-        // 全部の正解を見つけたかチェック
-        if (foundCorrects.length === correctList.length) {
-            resultDiv.innerText = "すべての正解を見つけました！⭕";
-            resultDiv.style.color = "#03dac6";
-            setTimeout(() => {
-                currentIndex++;
-                displayQuestion();
-            }, 1200);
-        } else {
-            resultDiv.innerText = `あと ${correctList.length - foundCorrects.length} つです...`;
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選択問題演習 - NW Platform</title>
+    <style>
+        /* デザイン設定 */
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: auto; }
+        h1 { color: #03dac6; }
+        .card { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        #question { font-size: 1.2rem; margin-bottom: 25px; line-height: 1.6; }
+        
+        /* ボタンのデザイン */
+        #options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        button { 
+            background: #333; color: white; border: 1px solid #444; padding: 15px; 
+            font-size: 1rem; cursor: pointer; border-radius: 8px; transition: 0.2s; 
         }
-    } else {
-        // 不正解を選んだ場合
-        resultDiv.innerText = "不正解が含まれています...❌ やり直し！";
-        resultDiv.style.color = "#cf6679";
-        // ミスしたらその問の最初からにする（またはそのまま続行するかはお好みです）
-        setTimeout(() => { displayQuestion(); }, 1000);
-    }
-}
+        button:hover { background: #444; border-color: #bb86fc; }
+        button:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        /* 結果メッセージ */
+        #result { margin-top: 25px; font-size: 1.1rem; font-weight: bold; min-height: 1.5em; }
+        
+        .nav-link { margin-top: 30px; display: block; color: #666; text-decoration: none; }
+        .nav-link:hover { color: #bbb; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>選択問題演習</h1>
+        
+        <div class="card">
+            <div id="question">問題を読み込み中...</div>
+            <div id="options"></div>
+            <div id="result"></div>
+        </div>
+
+        <a href="index.html" class="nav-link">← メニューに戻る</a>
+    </div>
+
+    <script>
+        // ★ここに「新しいデプロイ」で発行されたURLを貼り付けてください
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwLJudiLm4le_146kBp2neXS3dFYwqNQzEU-4msAWdMXzkpmQ7BOi4lzSxgyuEtuKuSRA/exec";
+
+        let allQuestions = [];
+        let currentIndex = 0;
+        let foundCorrects = []; 
+
+        // 1. スプレッドシートからデータを取ってくる
+        async function loadQuestions() {
+            try {
+                const response = await fetch(GAS_URL);
+                allQuestions = await response.json();
+                if (allQuestions.length === 0) {
+                    document.getElementById('question').innerText = "問題が見つかりませんでした。";
+                } else {
+                    displayQuestion();
+                }
+            } catch (e) {
+                document.getElementById('question').innerText = "データの読み込みに失敗しました。";
+                console.error(e);
+            }
+        }
+
+        // 2. 問題を画面に表示する
+        function displayQuestion() {
+            if (currentIndex >= allQuestions.length) {
+                document.getElementById('question').innerText = "🎉 全問終了です！お疲れ様でした。";
+                document.getElementById('options').innerHTML = "";
+                document.getElementById('result').innerText = "";
+                return;
+            }
+
+            const q = allQuestions[currentIndex];
+            foundCorrects = []; // 正解状況をリセット
+            
+            // 問題文を表示（正解数もヒントとして出す）
+            document.getElementById('question').innerText = `第${currentIndex + 1}問: ${q.question}\n（正解を ${q.answers.length} つ選んでください）`;
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = ""; // 前の問題のボタンを消す
+            document.getElementById('result').innerText = "";
+
+            // 選択肢ボタンを生成
+            q.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(btn, opt, q.answers);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        // 3. 正誤判定ロジック
+        function checkAnswer(btn, selected, correctList) {
+            const resultDiv = document.getElementById('result');
+            
+            if (correctList.includes(selected)) {
+                // 正解を選んだ場合
+                if (foundCorrects.includes(selected)) return; // すでに選んでたら無視
+
+                foundCorrects.push(selected);
+                btn.style.backgroundColor = "#03dac6"; // 正解色（ティール）
+                btn.style.color = "#000";
+                btn.disabled = true;
+
+                if (foundCorrects.length === correctList.length) {
+                    resultDiv.innerText = "⭕ 正解！次の問題へ進みます。";
+                    resultDiv.style.color = "#03dac6";
+                    setTimeout(() => {
+                        currentIndex++;
+                        displayQuestion();
+                    }, 1200);
+                } else {
+                    resultDiv.innerText = `正解！あと ${correctList.length - foundCorrects.length} つです...`;
+                    resultDiv.style.color = "#bb86fc";
+                }
+            } else {
+                // 不正解を選んだ場合
+                resultDiv.innerText = "❌ 不正解が含まれています。やり直し！";
+                resultDiv.style.color = "#cf6679";
+                // 1秒後に問題をリセットして最初から選び直し
+                setTimeout(() => {
+                    displayQuestion();
+                }, 1000);
+            }
+        }
+
+        // 最初に実行
+        loadQuestions();
+    </script>
+</body>
+</html>
