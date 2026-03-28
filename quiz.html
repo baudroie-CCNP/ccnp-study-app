@@ -1,3 +1,11 @@
+ご要望ありがとうございます！学習アプリとしての利便性を高めるための重要なアップデートですね。
+
+特に**「選択肢のシャッフル」**は、答えの場所で覚えてしまうのを防ぐために非常に有効です。また、自分のペースで進められるように「前へ」「次へ」ボタンを追加します。
+
+quiz.html のコードを以下のように書き換えてください。
+
+quiz.html 更新版コード
+HTML
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -5,27 +13,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>選択問題演習 - NW Platform</title>
     <style>
-        /* デザイン設定 */
         body { background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; }
         .container { max-width: 600px; margin: auto; }
         h1 { color: #03dac6; }
-        .card { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        #question { font-size: 1.2rem; margin-bottom: 25px; line-height: 1.6; }
+        .card { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); text-align: left; } /* ①左揃えに変更 */
+        #question { font-size: 1.1rem; margin-bottom: 25px; line-height: 1.6; white-space: pre-wrap; }
         
-        /* ボタンのデザイン */
         #options { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        button { 
+        button.option-btn { 
             background: #333; color: white; border: 1px solid #444; padding: 15px; 
-            font-size: 1rem; cursor: pointer; border-radius: 8px; transition: 0.2s; 
+            font-size: 1rem; cursor: pointer; border-radius: 8px; transition: 0.2s; text-align: left;
         }
-        button:hover { background: #444; border-color: #bb86fc; }
-        button:disabled { cursor: not-allowed; opacity: 0.8; }
+        button.option-btn:hover { background: #444; border-color: #bb86fc; }
+        button.option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
 
-        /* 結果メッセージ */
-        #result { margin-top: 25px; font-size: 1.1rem; font-weight: bold; min-height: 1.5em; }
+        #result { margin-top: 25px; font-size: 1.1rem; font-weight: bold; min-height: 1.5em; text-align: center; }
         
-        .nav-link { margin-top: 30px; display: block; color: #666; text-decoration: none; }
-        .nav-link:hover { color: #bbb; }
+        /* ④移動ボタンのスタイル */
+        .nav-controls { display: flex; justify-content: space-between; margin-top: 20px; }
+        .nav-btn { background: #444; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        .nav-link { margin-top: 30px; display: block; color: #666; text-decoration: none; text-align: center; }
     </style>
 </head>
 <body>
@@ -39,97 +48,105 @@
             <div id="result"></div>
         </div>
 
+        <div class="nav-controls">
+            <button id="prev-btn" class="nav-btn" onclick="prevQuestion()" disabled>← 前の問題</button>
+            <button id="next-btn" class="nav-btn" onclick="nextQuestion()" disabled>次の問題 →</button>
+        </div>
+
         <a href="index.html" class="nav-link">← メニューに戻る</a>
     </div>
 
     <script>
-        // ★ここに「新しいデプロイ」で発行されたURLを貼り付けてください
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwLJudiLm4le_146kBp2neXS3dFYwqNQzEU-4msAWdMXzkpmQ7BOi4lzSxgyuEtuKuSRA/exec";
 
         let allQuestions = [];
         let currentIndex = 0;
         let foundCorrects = []; 
 
-        // 1. スプレッドシートからデータを取ってくる
         async function loadQuestions() {
             try {
                 const response = await fetch(GAS_URL);
-                allQuestions = await response.json();
-                if (allQuestions.length === 0) {
-                    document.getElementById('question').innerText = "問題が見つかりませんでした。";
-                } else {
-                    displayQuestion();
-                }
+                const rawData = await response.json();
+                
+                // ② 読み込み時に選択肢をシャッフルする処理
+                allQuestions = rawData.map(q => {
+                    // 正解の文字列を退避
+                    const correctAnswers = q.answers;
+                    // 選択肢をシャッフル
+                    const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                    return { ...q, options: shuffledOptions, answers: correctAnswers };
+                });
+
+                displayQuestion();
             } catch (e) {
                 document.getElementById('question').innerText = "データの読み込みに失敗しました。";
-                console.error(e);
             }
         }
 
-        // 2. 問題を画面に表示する
         function displayQuestion() {
-            if (currentIndex >= allQuestions.length) {
-                document.getElementById('question').innerText = "🎉 全問終了です！お疲れ様でした。";
-                document.getElementById('options').innerHTML = "";
-                document.getElementById('result').innerText = "";
-                return;
-            }
-
+            if (allQuestions.length === 0) return;
             const q = allQuestions[currentIndex];
-            foundCorrects = []; // 正解状況をリセット
+            foundCorrects = []; 
             
-            // 問題文を表示（正解数もヒントとして出す）
-            document.getElementById('question').innerText = `第${currentIndex + 1}問: ${q.question}\n（正解を ${q.answers.length} つ選んでください）`;
+            document.getElementById('question').innerText = `第${currentIndex + 1}問: ${q.question}\n（正解を ${q.answers.length} つ選択）`;
             
             const optionsDiv = document.getElementById('options');
-            optionsDiv.innerHTML = ""; // 前の問題のボタンを消す
+            optionsDiv.innerHTML = "";
             document.getElementById('result').innerText = "";
 
-            // 選択肢ボタンを生成
             q.options.forEach((opt) => {
                 const btn = document.createElement('button');
+                btn.className = "option-btn";
                 btn.innerText = opt;
                 btn.onclick = () => checkAnswer(btn, opt, q.answers);
                 optionsDiv.appendChild(btn);
             });
+
+            // ④ ボタンの有効/無効制御
+            document.getElementById('prev-btn').disabled = (currentIndex === 0);
+            document.getElementById('next-btn').disabled = (currentIndex === allQuestions.length - 1);
         }
 
-        // 3. 正誤判定ロジック
         function checkAnswer(btn, selected, correctList) {
             const resultDiv = document.getElementById('result');
             
             if (correctList.includes(selected)) {
-                // 正解を選んだ場合
-                if (foundCorrects.includes(selected)) return; // すでに選んでたら無視
-
+                if (foundCorrects.includes(selected)) return;
                 foundCorrects.push(selected);
-                btn.style.backgroundColor = "#03dac6"; // 正解色（ティール）
+                btn.style.backgroundColor = "#03dac6";
                 btn.style.color = "#000";
                 btn.disabled = true;
 
                 if (foundCorrects.length === correctList.length) {
-                    resultDiv.innerText = "⭕ 正解！次の問題へ進みます。";
+                    resultDiv.innerText = "⭕ 正解！下のボタンで次へ進んでください。";
                     resultDiv.style.color = "#03dac6";
-                    setTimeout(() => {
-                        currentIndex++;
-                        displayQuestion();
-                    }, 1200);
+                    // ③ 勝手に進まないように、setTimeoutを削除しました
                 } else {
-                    resultDiv.innerText = `正解！あと ${correctList.length - foundCorrects.length} つです...`;
+                    resultDiv.innerText = `正解！あと ${correctList.length - foundCorrects.length} つ...`;
                     resultDiv.style.color = "#bb86fc";
                 }
             } else {
-                // 不正解を選んだ場合
                 resultDiv.innerText = "❌ 不正解が含まれています。やり直し！";
                 resultDiv.style.color = "#cf6679";
-                // 1秒後に問題をリセットして最初から選び直し
-                setTimeout(() => {
-                    displayQuestion();
-                }, 1000);
+                setTimeout(() => { displayQuestion(); }, 1000);
             }
         }
 
-        // 最初に実行
+        // ④ 移動用関数
+        function nextQuestion() {
+            if (currentIndex < allQuestions.length - 1) {
+                currentIndex++;
+                displayQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                displayQuestion();
+            }
+        }
+
         loadQuestions();
     </script>
 </body>
