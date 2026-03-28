@@ -1,1 +1,65 @@
+let allQuestions = [];
+let currentIndex = 0;
+let foundCorrects = []; // 今の問で「見つけた正解」を貯めるリスト
 
+async function loadQuestions() {
+    const response = await fetch(GAS_URL);
+    allQuestions = await response.json();
+    displayQuestion();
+}
+
+function displayQuestion() {
+    if (currentIndex >= allQuestions.length) {
+        document.getElementById('question').innerText = "全問終了です！お疲れ様でした。";
+        document.getElementById('options').innerHTML = "";
+        return;
+    }
+
+    const q = allQuestions[currentIndex];
+    foundCorrects = []; // 状態をリセット
+    
+    document.getElementById('question').innerText = `第${currentIndex + 1}問: ${q.question}（正解を ${q.answers.length} つ選んでください）`;
+    
+    const optionsDiv = document.getElementById('options');
+    optionsDiv.innerHTML = "";
+    document.getElementById('result').innerText = "";
+
+    q.options.forEach((opt) => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(btn, opt, q.answers);
+        optionsDiv.appendChild(btn);
+    });
+}
+
+function checkAnswer(btn, selected, correctList) {
+    const resultDiv = document.getElementById('result');
+    
+    // 1. 選んだものが正解リストに含まれているか
+    if (correctList.includes(selected)) {
+        // すでに選んだ正解をまた押した場合は何もしない
+        if (foundCorrects.includes(selected)) return;
+
+        foundCorrects.push(selected); // 見つけたリストに追加
+        btn.style.backgroundColor = "#03dac6"; // 正解の色に変える
+        btn.disabled = true; // 二度押し防止
+
+        // 全部の正解を見つけたかチェック
+        if (foundCorrects.length === correctList.length) {
+            resultDiv.innerText = "すべての正解を見つけました！⭕";
+            resultDiv.style.color = "#03dac6";
+            setTimeout(() => {
+                currentIndex++;
+                displayQuestion();
+            }, 1200);
+        } else {
+            resultDiv.innerText = `あと ${correctList.length - foundCorrects.length} つです...`;
+        }
+    } else {
+        // 不正解を選んだ場合
+        resultDiv.innerText = "不正解が含まれています...❌ やり直し！";
+        resultDiv.style.color = "#cf6679";
+        // ミスしたらその問の最初からにする（またはそのまま続行するかはお好みです）
+        setTimeout(() => { displayQuestion(); }, 1000);
+    }
+}
