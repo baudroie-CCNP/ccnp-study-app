@@ -3,41 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NW Learning Platform</title>
+    <title>虎の巻 - CCNP Tiger</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kaisei+Opti:wght@700&display=swap" rel="stylesheet">
+    
     <style>
-        /* 全体のデザイン設定 */
         body {
-            background-color: #121212; /* ダークモード */
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* ★ステップ①でアップロードした虎の画像を背景に設定 */
+            background-image: url('CCNP虎の巻.png'); 
+            background-size: cover; /* 画面いっぱいに広げる */
+            background-position: center; /* 中央に配置 */
+            background-attachment: fixed; /* スクロールしても背景を固定 */
+            background-color: #000; /* 画像が読み込まれるまでの背景色（黒） */
+            
+            color: #fff;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
+            font-family: sans-serif;
+        }
+
+        /* 背景画像の上に黒い半透明の膜を張って、文字を見やすくする */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background-color: rgba(0, 0, 0, 0.6); /* 黒さの調整（0.6を小さくすると透明になる） */
+            z-index: -1;
+        }
+
+        /* 習字の文字タイトルの設定 */
+        .title-container {
+            text-align: center;
+            margin-bottom: 50px;
+            z-index: 1; /* 文字を前面に出す */
+        }
+
+        .main-title {
+            /* Google Fontsで読み込んだフォントを適用 */
+            font-family: 'Kaisei Opti', serif; 
+            font-size: 5rem; /* 文字の大きさ */
+            color: #f1c40f; /* 虎のようなゴールド色 */
             margin: 0;
+            text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.3); /* 文字の輝き */
+            letter-spacing: 0.2em; /* 文字間隔を広げて厳かに */
         }
 
-        h1 {
-            color: #03dac6;
-            margin-bottom: 30px;
-            letter-spacing: 2px;
+        .sub-title {
+            font-size: 1.5rem;
+            color: #e0e0e0;
+            margin-top: 10px;
+            letter-spacing: 0.1em;
         }
 
+        /* メニューボタンのデザイン（以前のものを少し和風に調整） */
         .menu-container {
             display: grid;
             grid-template-columns: 1fr;
             gap: 20px;
             width: 90%;
             max-width: 400px;
+            z-index: 1;
         }
 
-        /* ボタンのデザイン */
         .menu-card {
-            background-color: #1e1e1e;
-            border: 1px solid #333;
+            background-color: rgba(30, 30, 30, 0.9); /* 少し透明にする */
+            border: 2px solid #555;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 8px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -45,53 +81,45 @@
             color: inherit;
         }
 
-        /* マウスを乗せた時の動き */
         .menu-card:hover {
-            border-color: #03dac6;
-            background-color: #252525;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            border-color: #f1c40f; /* ホバー時はゴールド */
+            background-color: rgba(50, 50, 50, 1);
+            transform: scale(1.05); /* 少し大きくする */
         }
 
         .menu-card h2 {
             margin: 0 0 10px 0;
-            font-size: 1.2rem;
-            color: #bb86fc;
+            font-size: 1.3rem;
+            color: #f1c40f;
+            font-family: 'Kaisei Opti', serif; /* ボタンの見出しも筆文字に */
         }
 
         .menu-card p {
             margin: 0;
             font-size: 0.9rem;
-            opacity: 0.7;
-        }
-
-        .footer {
-            margin-top: 40px;
-            font-size: 0.8rem;
-            color: #666;
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
 
-    <h1>NW 演習プラットフォーム</h1>
+    <div class="title-container">
+        <h1 class="main-title">虎の巻</h1>
+        <div class="sub-title">- CCNP Tiger -</div>
+    </div>
 
     <div class="menu-container">
         <a href="quiz.html" class="menu-card">
             <h2>選択問題</h2>
         </a>
 
-        <a href="drag&drop.html" class="menu-card">
-            <h2>ドラッグ＆ドロップ</h2>
+        <a href="drag.html" class="menu-card">
+            <h2>drag＆drop</h2>
         </a>
 
-        <a href="simulation.html" class="menu-card">
-            <h2>シュミレーション演習</h2>
+        <a href="terminal.html" class="menu-card">
+            <h2>simulation</h2>
         </a>
-    </div>
-
-    <div class="footer">
-        Connected to Google Sheets API
     </div>
 
 </body>
