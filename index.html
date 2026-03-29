@@ -1,173 +1,206 @@
+案Cの 「和風・レトロモダン」 は、ツール名である「虎の巻」という言葉の響きを最大限に活かしたデザインです。
+
+古来の「巻物」や「書物」の雰囲気を残しつつ、現代的なWebデザインのレイアウトを組み合わせることで、**「秘伝の書を紐解いて学習する」**というワクワク感を演出します。
+
+【案C】和風・レトロモダン（HTML/CSS全量）
+和紙のような質感（テクスチャ）と、印鑑のような赤（朱色）、力強い筆文字風のフォントをアクセントにしています。これをGitHubの index.html に貼り付けてみてください。
+
+HTML
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCNP Training Hub</title>
+    <title>CCNP 虎の巻 - 秘伝演習 -</title>
     <style>
         /* --- 基本設定 --- */
         :root {
-            --bg-color: #f5f5f7; /* Apple風の薄いグレー */
-            --main-white: #ffffff;
-            --text-dark: #1d1d1f; /* 深い墨色 */
-            --text-gray: #86868b;
-            --accent-blue: #0066cc; /* 知的なビジネスブルー */
-            --border-color: #d2d2d7;
+            --paper-color: #f2e8d5; /* 和紙のような生成り色 */
+            --ink-black: #2b2b2b;   /* 墨色 */
+            --shuiro: #e63946;     /* 朱色（印鑑の色） */
+            --gold: #b89c5e;       /* 金泥色 */
+            --border-ink: #3d3d3d;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #333; /* 背景は暗い木の机のような色 */
+            background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+            color: var(--ink-black);
+            font-family: "Hiragino Mincho ProN", "MS Mincho", serif; /* 明朝体で和の雰囲気を */
             margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
         }
 
-        /* --- メインカード --- */
-        .container {
-            background: var(--main-white);
+        /* --- 巻物風コンテナ --- */
+        .scroll-container {
+            background-color: var(--paper-color);
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); /* 和紙テクスチャ */
             width: 90%;
-            max-width: 600px;
-            padding: 60px 40px;
-            border-radius: 28px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
-            text-align: center;
+            max-width: 550px;
+            padding: 60px 50px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+            position: relative;
+            border-left: 15px solid var(--gold);
+            border-right: 15px solid var(--gold);
+            border-radius: 5px;
         }
 
-        /* --- タイトルセクション --- */
+        /* --- タイトルエリア --- */
         .header {
-            margin-bottom: 50px;
+            border-bottom: 2px double var(--border-ink);
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            position: relative;
         }
 
-        .category-tag {
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            margin-bottom: 12px;
-            display: block;
+        /* 落款（はんこ）風の装飾 */
+        .hanko {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--shuiro);
+            color: var(--shuiro);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(15deg);
+            font-family: sans-serif;
+            border-radius: 3px;
+            opacity: 0.8;
         }
 
         h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
+            font-size: 3rem;
             margin: 0;
-            letter-spacing: -0.02em;
+            letter-spacing: 0.2em;
+            font-weight: 900;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
-        .description {
-            color: var(--text-gray);
-            font-size: 1rem;
-            margin-top: 15px;
-            line-height: 1.5;
+        .subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+            letter-spacing: 0.1em;
         }
 
         /* --- メニューエリア --- */
         .menu-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 25px;
         }
 
         .menu-item {
+            text-decoration: none;
+            color: var(--ink-black);
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            background: var(--main-white);
-            border: 1px solid var(--border-color);
-            padding: 20px 24px;
-            border-radius: 16px;
-            text-decoration: none;
-            color: var(--text-dark);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 15px;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+            position: relative;
         }
 
-        /* ホバー時の挙動 */
+        /* ホバー時に筆で線を引いたような演出 */
+        .menu-item::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--ink-black);
+            transition: all 0.4s;
+            transform: translateX(-50%);
+        }
+
+        .menu-item:hover::after {
+            width: 80%;
+        }
+
         .menu-item:hover {
-            border-color: var(--accent-blue);
-            transform: scale(1.02);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.03);
+            transform: translateX(10px);
         }
 
-        .menu-info {
+        .step-num {
+            font-size: 1.5rem;
+            color: var(--shuiro);
+            margin-right: 20px;
+            font-style: italic;
+            font-weight: bold;
+        }
+
+        .menu-text {
             text-align: left;
         }
 
         .menu-title {
             display: block;
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 2px;
+            font-weight: bold;
+            font-size: 1.2rem;
         }
 
         .menu-sub {
             display: block;
-            font-size: 0.85rem;
-            color: var(--text-gray);
-        }
-
-        /* 矢印アイコン */
-        .arrow {
-            color: var(--border-color);
-            font-size: 1.2rem;
-            transition: color 0.2s;
-        }
-
-        .menu-item:hover .arrow {
-            color: var(--accent-blue);
-        }
-
-        /* 下部のフッター */
-        .footer {
-            margin-top: 40px;
             font-size: 0.8rem;
-            color: var(--text-gray);
+            color: #777;
         }
 
+        /* フッター */
+        .footer {
+            margin-top: 50px;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            color: #999;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="scroll-container">
+        <div class="hanko">合格</div>
+        
         <div class="header">
-            <span class="category-tag">CCNP Certification Kit</span>
             <h1>虎の巻</h1>
-            <p class="description">ネットワークエンジニアのための<br>実践的演習プラットフォーム</p>
+            <div class="subtitle">CCNP Enterprise ネットワーク 秘伝演習</div>
         </div>
 
         <div class="menu-list">
             <a href="https://script.google.com/macros/s/AKfycbyBfYSZmrJbqNWtj0Q0WRsRKpxCa8orfGzqLvegVCysXpCBr6Q-OXUiInrbngWgX0AgMQ/exec" class="menu-item">
-                <div class="menu-info">
-                    <span class="menu-title">Knowledge Base</span>
-                    <span class="menu-sub">選択形式による知識の定着</span>
+                <span class="step-num">壱</span>
+                <div class="menu-text">
+                    <span class="menu-title">知識の練武（選択問題）</span>
+                    <span class="menu-sub">多肢選択により基礎知識を磨く</span>
                 </div>
-                <span class="arrow">→</span>
             </a>
 
             <a href="https://script.google.com/macros/s/AKfycbxDcBNBZNF833OAlInFFQx7IPt52IQ731kP5WrZkZuoVJh-BxEZQ8NtS7b6DywXE3iL/exec" class="menu-item">
-                <div class="menu-info">
-                    <span class="menu-title">Drag & Drop</span>
-                    <span class="menu-sub">カテゴリ分類とマッチング</span>
+                <span class="step-num">弐</span>
+                <div class="menu-text">
+                    <span class="menu-title">仕分の試練（Drag & Drop）</span>
+                    <span class="menu-sub">項目を分類し正解を導き出す</span>
                 </div>
-                <span class="arrow">→</span>
             </a>
 
             <a href="simulation.html" class="menu-item">
-                <div class="menu-info">
-                    <span class="menu-title">Lab Simulation</span>
-                    <span class="menu-sub">ターミナル操作と実機構築</span>
+                <span class="step-num">参</span>
+                <div class="menu-text">
+                    <span class="menu-title">実機の極意（Simulation）</span>
+                    <span class="menu-sub">仮想端末にて構築の術を修める</span>
                 </div>
-                <span class="arrow">→</span>
             </a>
         </div>
 
         <div class="footer">
-            &copy; 2026 CCNP Study Group. All rights reserved.
+            令和八年三月吉日改訂
         </div>
     </div>
 
