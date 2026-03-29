@@ -1,1 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虎の巻 - ターミナル演習</title>
+    <style>
+        body { background-color: #0c0c0c; color: #00ff00; font-family: 'Courier New', monospace; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        
+        /* 問題ガイド */
+        .lab-guide { background: #1a1a1a; border-left: 5px solid #f1c40f; padding: 15px; margin-bottom: 20px; color: #f1c40f; font-family: sans-serif; }
+        .lab-nav { margin-bottom: 10px; display: flex; gap: 10px; }
+        .btn-sm { background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
+        .btn-sm:hover { background: #444; }
 
+        /* ターミナル本体 */
+        #terminal { background: #000; border: 1px solid #333; height: 450px; overflow-y: auto; padding: 15px; box-shadow: 0 0 20px rgba(0,255,0,0.05); }
+        .line { margin-bottom: 5px; white-space: pre-wrap; }
+        .input-area { display: flex; align-items: center; }
+        .prompt { font-weight: bold; margin-right: 10px; color: #00ff00; }
+        #user-input { background: transparent; border: none; color: #00ff00; font-family: inherit; font-size: 1rem; flex-grow: 1; outline: none; }
+        
+        /* 成功メッセージ */
+        .success-box { color: #03dac6; border: 2px solid #03dac6; padding: 10px; margin-top: 20px; text-align: center; display: none; font-family: sans-serif; }
+    </style>
+</head>
+<body onclick="document.getElementById('user-input').focus()">
+
+<div class="container">
+    <div class="lab-nav">
+        <button class="btn-sm" onclick="changeLab(-1)">← 前の演習</button>
+        <span id="lab-counter" style="color:#888; font-family:sans-serif; font-size:0.8rem; align-self:center;">Lab 1 / 2</span>
+        <button class="btn-sm" onclick="changeLab(1)">次の演習 →</button>
+    </div>
+
+    <div class="lab-guide">
+        <strong id="lab-title">演習タイトル</strong><br>
+        <span id="lab-task">演習の指示内容がここに表示されます。</span>
+    </div>
+
+    <div id="terminal">
+        <div id="output">
+            <div class="line">Cisco IOS Simulation Environment [Version 1.0]</div>
+            <div class="line">Ready.</div>
+            <div class="line">---</div>
+        </div>
+        <div class="input-area">
+            <span id="prompt" class="prompt">Router></span>
+            <input type="text" id="user-input" autofocus spellcheck="false" autocomplete="off">
+        </div>
+    </div>
+
+    <div id="success-msg" class="success-box">
+        🎉 演習完了！全てのコマンドが正しく入力されました。
+    </div>
+</div>
+
+<script>
+    /**
+     * 【ここが問題データです】
+     * 問題を増やしたいときは、以下の配列にオブジェクトを追加するだけ！
+     */
+    const labList = [
+        {
+            title: "基本設定: 特権モードと設定モード",
+            task: "特権モードに移行し、設定モードに入ってください。",
+            // 正解コマンドを順番に書く（省略形もOKなように判定側で工夫します）
+            commands: ["enable", "configure terminal"],
+            success: "設定モードへの移行に成功しました！"
+        },
+        {
+            title: "インターフェース設定: IPアドレス",
+            task: "Gi0/1に 192.168.1.1 255.255.255.0 を設定してください。",
+            commands: ["enable", "conf t", "interface gigabitethernet 0/1", "ip address 192.168.1.1 255.255.255.0"],
+            success: "IPアドレスの設定が完了しました！"
+        }
+    ];
+
+    let currentLabIdx = 0;
+    let currentStep = 0;
+    let currentMode = 'user'; // user, privileged, config, if
+
+    const input = document.getElementById('user-input');
+    const output = document.getElementById('output');
+    const prompt = document.getElementById('prompt');
+
+    // 初期化
+    function initLab() {
+        const lab = labList[currentLabIdx];
+        document.getElementById('lab-title').innerText = lab.title;
+        document.getElementById('lab-task').innerText = lab.task;
+        document.getElementById('lab-counter').innerText = `Lab ${currentLabIdx + 1} / ${labList.length}`;
+        document.getElementById('success-msg').style.display = 'none';
+        output.innerHTML = '<div class="line">--- Lab Reset ---</div>';
+        currentStep = 0;
+        setMode('user');
+    }
+
+    // コマンド入力イベント
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = input.value.trim();
+            if (cmd) {
+                processCommand(cmd);
+            }
+            input.value = '';
+            document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+        }
+    });
+
+    function processCommand(cmd) {
+        const lab = labList[currentLabIdx];
+        const fullLine = prompt.innerText + " " + cmd;
+        addLine(fullLine);
+
+        const lowerCmd = cmd.toLowerCase();
+        const targetCmd = lab.commands[currentStep].toLowerCase();
+
+        // 簡易的なコマンド判定（前方一致を許容）
+        // 例: 'enable' に対して 'en' でも正解とする
+        if (targetCmd.startsWith(lowerCmd) && lowerCmd.length >= 2 || lowerCmd === targetCmd) {
+            
+            // モード遷移のシミュレーション
+            if (lowerCmd.startsWith('en')) setMode('privileged');
+            else if (lowerCmd.startsWith('conf t')) setMode('config');
+            else if (lowerCmd.startsWith('int')) setMode('if');
+            else if (lowerCmd === 'exit') {
+                if (currentMode === 'if') setMode('config');
+                else if (currentMode === 'config') setMode('privileged');
+            }
+
+            currentStep++;
+            if (currentStep === lab.commands.length) {
+                showSuccess(lab.success);
+            }
+        } else {
+            addLine("% Invalid input or wrong sequence.");
+        }
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        const prompts = {
+            'user': 'Router>',
+            'privileged': 'Router#',
+            'config': 'Router(config)#',
+            'if': 'Router(config-if)#'
+        };
+        prompt.innerText = prompts[mode];
+    }
+
+    function addLine(text) {
+        const div = document.createElement('div');
+        div.className = 'line';
+        div.innerText = text;
+        output.appendChild(div);
+    }
+
+    function showSuccess(msg) {
+        const box = document.getElementById('success-msg');
+        box.innerText = "🎉 " + msg;
+        box.style.display = 'block';
+    }
+
+    function changeLab(dir) {
+        currentLabIdx += dir;
+        if (currentLabIdx < 0) currentLabIdx = 0;
+        if (currentLabIdx >= labList.length) currentLabIdx = labList.length - 1;
+        initLab();
+    }
+
+    window.onload = initLab;
+</script>
+</body>
+</html>
