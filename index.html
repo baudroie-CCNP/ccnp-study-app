@@ -3,123 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>虎の巻 - CCNP Tiger</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Kaisei+Opti:wght@700&display=swap" rel="stylesheet">
-    
+    <title>CCNP Enterprise - 虎の巻 -</title>
     <style>
+        /* --- 基本設定 --- */
+        :root {
+            --bg-color: #050509; /* 深い宇宙のような黒 */
+            --card-bg: rgba(255, 255, 255, 0.05); /* ガラス質感のベース */
+            --text-main: #e0e0e0;
+            --accent-1: #00f2fe; /* シアン（ネオン） */
+            --accent-2: #4facfe; /* ブルー（ネオン） */
+            --highlight: #f1c40f; /* ゴールド */
+        }
+
         body {
-            /* ★ステップ①でアップロードした虎の画像を背景に設定 */
-            background-image: url('CCNP虎の巻.png'); 
-            background-size: cover; /* 画面いっぱいに広げる */
-            background-position: center; /* 中央に配置 */
-            background-attachment: fixed; /* スクロールしても背景を固定 */
-            background-color: #000; /* 画像が読み込まれるまでの背景色（黒） */
-            
-            color: #fff;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            font-family: sans-serif;
+            min-height: 100vh;
+            overflow: hidden; /* 背景アニメーションのため */
+            position: relative;
         }
 
-        /* 背景画像の上に黒い半透明の膜を張って、文字を見やすくする */
+        /* --- 背景のアニメーション（グリッド） --- */
         body::before {
-            content: '';
+            content: "";
             position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            background-color: rgba(0, 0, 0, 0.6); /* 黒さの調整（0.6を小さくすると透明になる） */
+            width: 200%; height: 200%;
+            top: -50%; left: -50%;
+            background-image: 
+                linear-gradient(rgba(0, 242, 254, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            animation: grid-move 20s linear infinite;
             z-index: -1;
         }
+        @keyframes grid-move {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+        }
 
-        /* 習字の文字タイトルの設定 */
-        .title-container {
+        /* --- メインコンテナ --- */
+        .main-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px); /* すりガラス効果 */
+            -webkit-backdrop-filter: blur(10px);
+            padding: 50px 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
             text-align: center;
-            margin-bottom: 50px;
-            z-index: 1; /* 文字を前面に出す */
-        }
-
-        .main-title {
-            /* Google Fontsで読み込んだフォントを適用 */
-            font-family: 'Kaisei Opti', serif; 
-            font-size: 5rem; /* 文字の大きさ */
-            color: #f1c40f; /* 虎のようなゴールド色 */
-            margin: 0;
-            text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.3); /* 文字の輝き */
-            letter-spacing: 0.2em; /* 文字間隔を広げて厳かに */
-        }
-
-        .sub-title {
-            font-size: 1.5rem;
-            color: #e0e0e0;
-            margin-top: 10px;
-            letter-spacing: 0.1em;
-        }
-
-        /* メニューボタンのデザイン（以前のものを少し和風に調整） */
-        .menu-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
             width: 90%;
-            max-width: 400px;
-            z-index: 1;
+            max-width: 500px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .menu-card {
-            background-color: rgba(30, 30, 30, 0.9); /* 少し透明にする */
-            border: 2px solid #555;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
+        /* 装飾用のネオンライン */
+        .main-container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-1), var(--accent-2), transparent);
         }
 
-        .menu-card:hover {
-            border-color: #f1c40f; /* ホバー時はゴールド */
-            background-color: rgba(50, 50, 50, 1);
-            transform: scale(1.05); /* 少し大きくする */
-        }
-
-        .menu-card h2 {
-            margin: 0 0 10px 0;
-            font-size: 1.3rem;
-            color: #f1c40f;
-            font-family: 'Kaisei Opti', serif; /* ボタンの見出しも筆文字に */
-        }
-
-        .menu-card p {
+        /* --- タイトルエリア --- */
+        h1 {
+            font-size: 2.5rem;
             margin: 0;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            background: linear-gradient(var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent; /* 文字をグラデーションに */
+            letter-spacing: 2px;
+            font-weight: 800;
         }
+        
+        .version-tag {
+            font-size: 0.8rem;
+            color: var(--highlight);
+            border: 1px solid var(--highlight);
+            padding: 2px 8px;
+            border-radius: 10px;
+            position: absolute;
+            top: 15px; right: 15px;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-top: 10px;
+            margin-bottom: 40px;
+            font-size: 0.95rem;
+        }
+
+        /* --- ボタンエリア --- */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .scroll-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 18px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ホバー時のネオン効果 */
+        .scroll-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-1);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* ボタン内のアイコン用スタイル（任意） */
+        .btn-icon {
+            margin-right: 15px;
+            font-size: 1.2rem;
+            color: var(--accent-1);
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="title-container">
-        <h1 class="main-title">虎の巻</h1>
-        <div class="sub-title">- CCNP Tiger -</div>
-    </div>
+    <div class="main-container">
+        <span class="version-tag">CCNP v1.0</span>
+        <h1>虎の巻</h1>
+        <div class="subtitle">ENCOR / ENARSI 実践演習ツール</div>
 
-    <div class="menu-container">
-        <a href="https://script.google.com/macros/s/AKfycbyBfYSZmrJbqNWtj0Q0WRsRKpxCa8orfGzqLvegVCysXpCBr6Q-OXUiInrbngWgX0AgMQ/exec" class="menu-card">
-            <h2>選択問題</h2>
-        </a>
-
-        <a href="https://script.google.com/macros/s/AKfycbxDcBNBZNF833OAlInFFQx7IPt52IQ731kP5WrZkZuoVJh-BxEZQ8NtS7b6DywXE3iL/exec" class="menu-card">
-            <h2>drag＆drop</h2>
-        </a>
-
-        <a href="simulation.html" class="menu-card">
-            <h2>simulation</h2>
-        </a>
+        <div class="button-group">
+            <a href="https://script.google.com/macros/s/AKfycbyBfYSZmrJbqNWtj0Q0WRsRKpxCa8orfGzqLvegVCysXpCBr6Q-OXUiInrbngWgX0AgMQ/exec" class="scroll-btn">
+                <span class="btn-icon">📋</span>一、選択問題
+            </a>
+            <a href="https://script.google.com/macros/s/AKfycbxDcBNBZNF833OAlInFFQx7IPt52IQ731kP5WrZkZuoVJh-BxEZQ8NtS7b6DywXE3iL/exec" class="scroll-btn">
+                <span class="btn-icon">🧩</span>二、Drag & Drop
+            </a>
+            <a href="simulation.html" class="scroll-btn">
+                <span class="btn-icon">💻</span>三、Simulation
+            </a>
+        </div>
     </div>
 
 </body>
