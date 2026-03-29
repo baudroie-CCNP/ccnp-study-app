@@ -3,162 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCNP Enterprise - 虎の巻 -</title>
+    <title>CCNP Training Hub</title>
     <style>
         /* --- 基本設定 --- */
         :root {
-            --bg-color: #050509; /* 深い宇宙のような黒 */
-            --card-bg: rgba(255, 255, 255, 0.05); /* ガラス質感のベース */
-            --text-main: #e0e0e0;
-            --accent-1: #00f2fe; /* シアン（ネオン） */
-            --accent-2: #4facfe; /* ブルー（ネオン） */
-            --highlight: #f1c40f; /* ゴールド */
+            --bg-color: #f5f5f7; /* Apple風の薄いグレー */
+            --main-white: #ffffff;
+            --text-dark: #1d1d1f; /* 深い墨色 */
+            --text-gray: #86868b;
+            --accent-blue: #0066cc; /* 知的なビジネスブルー */
+            --border-color: #d2d2d7;
         }
 
         body {
             background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-dark);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden; /* 背景アニメーションのため */
-            position: relative;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* --- 背景のアニメーション（グリッド） --- */
-        body::before {
-            content: "";
-            position: absolute;
-            width: 200%; height: 200%;
-            top: -50%; left: -50%;
-            background-image: 
-                linear-gradient(rgba(0, 242, 254, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            transform: perspective(500px) rotateX(60deg);
-            animation: grid-move 20s linear infinite;
-            z-index: -1;
-        }
-        @keyframes grid-move {
-            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
-            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
-        }
-
-        /* --- メインコンテナ --- */
-        .main-container {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px); /* すりガラス効果 */
-            -webkit-backdrop-filter: blur(10px);
-            padding: 50px 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            text-align: center;
+        /* --- メインカード --- */
+        .container {
+            background: var(--main-white);
             width: 90%;
-            max-width: 500px;
-            position: relative;
-            overflow: hidden;
+            max-width: 600px;
+            padding: 60px 40px;
+            border-radius: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+            text-align: center;
         }
 
-        /* 装飾用のネオンライン */
-        .main-container::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-1), var(--accent-2), transparent);
+        /* --- タイトルセクション --- */
+        .header {
+            margin-bottom: 50px;
         }
 
-        /* --- タイトルエリア --- */
+        .category-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: block;
+        }
+
         h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
+            font-weight: 700;
             margin: 0;
-            background: linear-gradient(var(--accent-1), var(--accent-2));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent; /* 文字をグラデーションに */
-            letter-spacing: 2px;
-            font-weight: 800;
-        }
-        
-        .version-tag {
-            font-size: 0.8rem;
-            color: var(--highlight);
-            border: 1px solid var(--highlight);
-            padding: 2px 8px;
-            border-radius: 10px;
-            position: absolute;
-            top: 15px; right: 15px;
+            letter-spacing: -0.02em;
         }
 
-        .subtitle {
-            color: #888;
-            margin-top: 10px;
-            margin-bottom: 40px;
-            font-size: 0.95rem;
+        .description {
+            color: var(--text-gray);
+            font-size: 1rem;
+            margin-top: 15px;
+            line-height: 1.5;
         }
 
-        /* --- ボタンエリア --- */
-        .button-group {
+        /* --- メニューエリア --- */
+        .menu-list {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
         }
 
-        .scroll-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
-            padding: 18px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+        .menu-item {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            background: var(--main-white);
+            border: 1px solid var(--border-color);
+            padding: 20px 24px;
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* ホバー時のネオン効果 */
-        .scroll-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--accent-1);
-            color: #fff;
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
-            transform: translateY(-2px);
+        /* ホバー時の挙動 */
+        .menu-item:hover {
+            border-color: var(--accent-blue);
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
 
-        /* ボタン内のアイコン用スタイル（任意） */
-        .btn-icon {
-            margin-right: 15px;
+        .menu-info {
+            text-align: left;
+        }
+
+        .menu-title {
+            display: block;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+
+        .menu-sub {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-gray);
+        }
+
+        /* 矢印アイコン */
+        .arrow {
+            color: var(--border-color);
             font-size: 1.2rem;
-            color: var(--accent-1);
+            transition: color 0.2s;
+        }
+
+        .menu-item:hover .arrow {
+            color: var(--accent-blue);
+        }
+
+        /* 下部のフッター */
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: var(--text-gray);
         }
 
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <span class="version-tag">CCNP v1.0</span>
-        <h1>虎の巻</h1>
-        <div class="subtitle">ENCOR / ENARSI 実践演習ツール</div>
+    <div class="container">
+        <div class="header">
+            <span class="category-tag">CCNP Certification Kit</span>
+            <h1>虎の巻</h1>
+            <p class="description">ネットワークエンジニアのための<br>実践的演習プラットフォーム</p>
+        </div>
 
-        <div class="button-group">
-            <a href="https://script.google.com/macros/s/AKfycbyBfYSZmrJbqNWtj0Q0WRsRKpxCa8orfGzqLvegVCysXpCBr6Q-OXUiInrbngWgX0AgMQ/exec" class="scroll-btn">
-                <span class="btn-icon">📋</span>一、選択問題
+        <div class="menu-list">
+            <a href="https://script.google.com/macros/s/AKfycbyBfYSZmrJbqNWtj0Q0WRsRKpxCa8orfGzqLvegVCysXpCBr6Q-OXUiInrbngWgX0AgMQ/exec" class="menu-item">
+                <div class="menu-info">
+                    <span class="menu-title">Knowledge Base</span>
+                    <span class="menu-sub">選択形式による知識の定着</span>
+                </div>
+                <span class="arrow">→</span>
             </a>
-            <a href="https://script.google.com/macros/s/AKfycbxDcBNBZNF833OAlInFFQx7IPt52IQ731kP5WrZkZuoVJh-BxEZQ8NtS7b6DywXE3iL/exec" class="scroll-btn">
-                <span class="btn-icon">🧩</span>二、Drag & Drop
+
+            <a href="https://script.google.com/macros/s/AKfycbxDcBNBZNF833OAlInFFQx7IPt52IQ731kP5WrZkZuoVJh-BxEZQ8NtS7b6DywXE3iL/exec" class="menu-item">
+                <div class="menu-info">
+                    <span class="menu-title">Drag & Drop</span>
+                    <span class="menu-sub">カテゴリ分類とマッチング</span>
+                </div>
+                <span class="arrow">→</span>
             </a>
-            <a href="simulation.html" class="scroll-btn">
-                <span class="btn-icon">💻</span>三、Simulation
+
+            <a href="simulation.html" class="menu-item">
+                <div class="menu-info">
+                    <span class="menu-title">Lab Simulation</span>
+                    <span class="menu-sub">ターミナル操作と実機構築</span>
+                </div>
+                <span class="arrow">→</span>
             </a>
+        </div>
+
+        <div class="footer">
+            &copy; 2026 CCNP Study Group. All rights reserved.
         </div>
     </div>
 
