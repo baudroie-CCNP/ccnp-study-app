@@ -3,197 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCNP 虎の巻 - 秘伝演習 -</title>
+    <title>CCNP 虎の巻 - Portal -</title>
     <style>
-        /* --- 基本設定 --- */
         :root {
-            --paper-color: #f2e8d5; /* 和紙のような生成り色 */
-            --ink-black: #2b2b2b;   /* 墨色 */
-            --shuiro: #e63946;     /* 朱色（印鑑の色） */
-            --gold: #b89c5e;       /* 金泥色 */
-            --border-ink: #3d3d3d;
+            --main-bg: #f5f5f7;
+            --card-bg: #ffffff;
+            --footer-bg: #e5e5e5; /* お問い合わせ欄用のグレー */
+            --accent-blue: #0066cc;
+            --text-dark: #1d1d1f;
+            --text-gray: #86868b;
         }
 
         body {
-            background-color: #333; /* 背景は暗い木の机のような色 */
-            background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
-            color: var(--ink-black);
-            font-family: "Hiragino Mincho ProN", "MS Mincho", serif; /* 明朝体で和の雰囲気を */
             margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: var(--main-bg);
+            color: var(--text-dark);
             min-height: 100vh;
-        }
-
-        /* --- 巻物風コンテナ --- */
-        .scroll-container {
-            background-color: var(--paper-color);
-            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); /* 和紙テクスチャ */
-            width: 90%;
-            max-width: 550px;
-            padding: 60px 50px;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
-            position: relative;
-            border-left: 15px solid var(--gold);
-            border-right: 15px solid var(--gold);
-            border-radius: 5px;
-        }
-
-        /* --- タイトルエリア --- */
-        .header {
-            border-bottom: 2px double var(--border-ink);
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            position: relative;
-        }
-
-        /* 落款（はんこ）風の装飾 */
-        .hanko {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            width: 50px;
-            height: 50px;
-            border: 3px solid var(--shuiro);
-            color: var(--shuiro);
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: rotate(15deg);
-            font-family: sans-serif;
-            border-radius: 3px;
-            opacity: 0.8;
-        }
-
-        h1 {
-            font-size: 3rem;
-            margin: 0;
-            letter-spacing: 0.2em;
-            font-weight: 900;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .subtitle {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 10px;
-            letter-spacing: 0.1em;
-        }
-
-        /* --- メニューエリア --- */
-        .menu-list {
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            /* ② 背景画像の挿入（透過度は画像自体の加工またはopacityで調整） */
+            background-image: url('images/background_pattern.png');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
         }
 
-        .menu-item {
-            text-decoration: none;
-            color: var(--ink-black);
+        /* 全体を包むメインエリア */
+        .wrapper {
+            flex: 1; /* フッターを下に押し下げるため */
             display: flex;
+            flex-direction: column;
             align-items: center;
-            padding: 15px;
-            border: 1px solid transparent;
-            transition: all 0.3s;
-            position: relative;
+            padding-top: 60px;
         }
 
-        /* ホバー時に筆で線を引いたような演出 */
-        .menu-item::after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: var(--ink-black);
-            transition: all 0.4s;
-            transform: translateX(-50%);
+        /* ① タイトル画像エリア */
+        .header-logo {
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+        .header-logo img {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
         }
 
-        .menu-item:hover::after {
-            width: 80%;
+        /* ③ ボタン配置エリア */
+        .menu-container {
+            width: 90%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 60px;
         }
 
-        .menu-item:hover {
-            background: rgba(0,0,0,0.03);
-            transform: translateX(10px);
+        .btn-portal {
+            background: var(--card-bg);
+            border: 1px solid #d2d2d7;
+            border-radius: 14px;
+            padding: 20px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
 
-        .step-num {
-            font-size: 1.5rem;
-            color: var(--shuiro);
-            margin-right: 20px;
-            font-style: italic;
-            font-weight: bold;
+        .btn-portal:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
 
-        .menu-text {
-            text-align: left;
+        /* ④ お問い合わせ窓口（フッターエリア） */
+        .contact-section {
+            background-color: var(--footer-bg);
+            padding: 40px 20px;
+            text-align: center;
+            border-top: 1px solid #ccc;
         }
 
-        .menu-title {
-            display: block;
-            font-weight: bold;
+        .contact-section h2 {
             font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #333;
         }
 
-        .menu-sub {
-            display: block;
-            font-size: 0.8rem;
-            color: #777;
+        .contact-btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        /* フッター */
-        .footer {
-            margin-top: 50px;
-            font-size: 0.7rem;
-            letter-spacing: 0.1em;
-            color: #999;
+        .btn-contact {
+            background: #fff;
+            border: 1px solid #999;
+            color: #555;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .btn-contact:hover {
+            background: #f0f0f0;
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
         }
     </style>
 </head>
 <body>
 
-    <div class="scroll-container">
-        <div class="hanko">合格</div>
-        
-        <div class="header">
-            <h1>虎の巻</h1>
-            <div class="subtitle">CCNP Enterprise ネットワーク 秘伝演習</div>
+    <div class="wrapper">
+        <div class="header-logo">
+            <img src="images/title_logo.png" alt="虎の巻 タイトルロゴ">
         </div>
 
-        <div class="menu-list">
-            <a href="https://script.google.com/macros/s/AKfycbw9BUxsBLmPblsOS9fEbip-mhDuCwT9rK9AlL-YYQSK05f2OtH1PJjC3eV2JZXGr1Kf/exec" class="menu-item">
-                <span class="step-num">壱</span>
-                <div class="menu-text">
-                    <span class="menu-title">知識の練武（選択問題）</span>
-                    <span class="menu-sub">多肢選択により基礎知識を磨く</span>
-                </div>
-            </a>
-
-            <a href="https://script.google.com/macros/s/AKfycbxk8VFIUYiFcixl1uJwNZQv6C9b0QTwfbNt3f0dLLdAYMFSfV6gWj5WEKB0WzhnNt3N/exec" class="menu-item">
-                <span class="step-num">弐</span>
-                <div class="menu-text">
-                    <span class="menu-title">仕分の試練（Drag & Drop）</span>
-                    <span class="menu-sub">項目を分類し正解を導き出す</span>
-                </div>
-            </a>
-
-            <a href="simulation.html" class="menu-item">
-                <span class="step-num">参</span>
-                <div class="menu-text">
-                    <span class="menu-title">実機の極意（Simulation）</span>
-                    <span class="menu-sub">仮想端末にて構築の術を修める</span>
-                </div>
-            </a>
+        <div class="menu-container">
+            <a href="https://script.google.com/macros/s/AKfycbw9BUxsBLmPblsOS9fEbip-mhDuCwT9rK9AlL-YYQSK05f2OtH1PJjC3eV2JZXGr1Kf/exec" class="btn-portal">選択問題</a>
+            <a href="https://script.google.com/macros/s/AKfycbxk8VFIUYiFcixl1uJwNZQv6C9b0QTwfbNt3f0dLLdAYMFSfV6gWj5WEKB0WzhnNt3N/exec" class="btn-portal">Drag & Drop</a>
+            <a href="simulation.html" class="btn-portal">Simulation</a>
         </div>
+    </div>
 
-        <div class="footer">
-            令和八年三月吉日改訂
+    <div class="contact-section">
+        <h2>お問い合わせ窓口</h2>
+        <div class="contact-btn-group">
+            <a href="#" class="btn-contact">不具合報告/機能改善リクエストはこちら</a>
+            <a href="#" class="btn-contact">試験後フィードバックはこちら</a>
         </div>
+        <p style="font-size: 0.7rem; color: #999; margin-top: 20px;">&copy; 2026 CCNP 虎の巻 Project</p>
     </div>
 
 </body>
