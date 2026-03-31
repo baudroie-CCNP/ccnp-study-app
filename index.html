@@ -6,8 +6,7 @@
     <title>CCNP 虎の巻 - Portal -</title>
     <style>
         :root {
-            --main-white: #ffffff;
-            --card-bg: rgba(255, 255, 255, 0.9); /* 少し透ける白 */
+            --card-bg: rgba(255, 255, 255, 0.95); /* ボタンの背景はほぼ白（読みやすさのため） */
             --footer-bg: #eeeeee;
             --accent-blue: #007aff;
             --text-dark: #1d1d1f;
@@ -18,34 +17,21 @@
             padding: 0;
             height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
-
-        /* ② 背景画像の設定 */
-        .bg-image {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            /* 画像のパスを確認してください */
+            /* ② 背景画像を透過させず、そのまま表示 */
             background-image: url('images/background_pattern.png');
             background-size: cover;
             background-position: center;
-            z-index: -2;
+            background-attachment: fixed; /* スクロールしても背景は固定 */
+            background-repeat: no-repeat;
         }
 
-        /* 背景を暗く/薄くして文字を読みやすくする「膜」 */
-        .bg-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(255, 255, 255, 0.6); /* 白い膜（0.6を小さくすると透明に近づく） */
-            z-index: -1;
-        }
-
+        /* 透過用のオーバーレイ（膜）を削除、または完全に透明にする */
         .wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            /* 背景がハッキリ見える分、コンテンツの視認性を上げるための設定 */
         }
 
         .content-main {
@@ -62,13 +48,14 @@
         .header-logo {
             width: 100%;
             max-width: 500px;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             text-align: center;
         }
         .header-logo img {
             width: 100%;
             height: auto;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+            /* 背景がハッキリしているため、ロゴに強い影をつけて浮き立たせる */
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
         }
 
         /* ③ ボタンエリア */
@@ -77,30 +64,29 @@
             max-width: 400px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
         }
 
         .btn-portal {
             background: var(--card-bg);
-            backdrop-filter: blur(5px); /* 背景をぼかすおしゃれ効果 */
-            border: 1px solid rgba(0,0,0,0.1);
-            border-radius: 12px;
-            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            padding: 22px;
             text-decoration: none;
             color: var(--text-dark);
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-weight: 700;
+            font-size: 1.15rem;
             text-align: center;
-            transition: 0.25s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            /* ボタンが背景に埋もれないよう、ハッキリとした影をつける */
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
         }
 
         .btn-portal:hover {
-            background: var(--main-white);
-            border-color: var(--accent-blue);
+            background: #ffffff;
             color: var(--accent-blue);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
         }
 
         /* ④ お問い合わせ窓口（欄外グレーエリア） */
@@ -109,13 +95,13 @@
             width: 100%;
             padding: 50px 0;
             text-align: center;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #ccc;
         }
 
         .contact-section h2 {
             font-size: 1.1rem;
             margin-bottom: 25px;
-            color: #444;
+            color: #333;
         }
 
         .contact-btn-group {
@@ -128,31 +114,30 @@
 
         .btn-contact {
             background: #ffffff;
-            border: 1px solid #bbb;
-            color: #666;
+            border: 1px solid #999;
+            color: #555;
             padding: 12px 24px;
-            border-radius: 6px;
+            border-radius: 8px;
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            font-weight: 600;
             transition: 0.2s;
         }
 
         .btn-contact:hover {
             border-color: var(--accent-blue);
             color: var(--accent-blue);
+            background: #fdfdfd;
         }
 
         .copyright {
-            font-size: 0.7rem;
-            color: #999;
+            font-size: 0.75rem;
+            color: #777;
             margin-top: 30px;
         }
     </style>
 </head>
 <body>
-
-    <div class="bg-image"></div>
-    <div class="bg-overlay"></div>
 
     <div class="wrapper">
         <div class="content-main">
