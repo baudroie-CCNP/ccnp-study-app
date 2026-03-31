@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+　<script>
+  const password = prompt("baudroie");
+  if (password !== "0420") { // ★ここに好きなパスワードを設定
+    alert("パスワードが違います。");
+    document.body.innerHTML = "<h1>閲覧権限がありません</h1>";
+    window.location.href = "about:blank"; // 白紙ページへ飛ばす
+  }
+　</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CCNP 虎の巻 - Portal -</title>
