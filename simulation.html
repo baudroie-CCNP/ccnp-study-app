@@ -195,27 +195,48 @@
         document.getElementById('cmd-input').focus();
     }
 
-    // 4. コマンド入力処理
+// コマンド入力処理
     document.getElementById('cmd-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') {
             const val = e.target.value.trim();
-            const dev = deviceState[activeId];
-            dev.history += dev.prompt + " " + val + "\n";
-            
-            // 簡易プロンプト切替
             const low = val.toLowerCase();
-            if (low === "en" || low === "enable") dev.prompt = activeId + "#";
-            else if (low === "conf t" || low === "configure terminal") dev.prompt = activeId + "(config)#";
-            else if (low.startsWith("int ")) dev.prompt = activeId + "(config-if)#";
+            const dev = deviceState[activeId];
+
+            // 履歴にコマンドを記録
+            dev.history += dev.prompt + " " + val + "\n";
+
+            // --- ① show running-config の処理 ---
+            if (low === "sh run" || low === "show running-config") {
+                // スプシから読み込んだ初期コンフィグ（または変更後）を表示
+                dev.history += (dev.configBody || "Building configuration...\n\nCurrent configuration : 0 bytes\n!") + "\n";
+            } 
+            // プロンプト切替ロジック（既存分）
+            else if (low === "en" || low === "enable") dev.prompt = activeId + "#";
+            else if (low === "conf t") dev.prompt = activeId + "(config)#";
             else if (low === "exit") dev.prompt = activeId + ">";
-            
+            else if (val !== "") {
+                dev.history += "% Unknown command.\n";
+            }
+
             e.target.value = "";
-            document.getElementById('terminal-history').innerText = dev.history;
-            document.getElementById('current-prompt').innerText = dev.prompt;
-            document.getElementById('terminal-history').scrollTop = 99999;
+            renderTerminal(); // 画面更新
         }
     });
 
+    // 演習開始時にコンフィグをセットする部分（startLab関数内）
+    function startLab(lab) {
+        // ...（前回の処理）...
+        lab.devices.forEach((dev, idx) => {
+            const name = dev.trim();
+            deviceState[name] = { 
+                history: `${name} Console Initialized.\n`, 
+                prompt: `${name}>`, 
+                currentInput: "",
+                configBody: lab.initialConfigs[name] || "!" // スプシからその機器の分を取得
+            };
+            // ...
+        });
+    }
     // 5. 左右リサイズ
     const resizer = document.getElementById('dragMe');
     const leftPanel = document.getElementById('left-panel');
