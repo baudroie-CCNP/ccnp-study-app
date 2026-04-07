@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCNP Simulation Lab - Pro Engine</title>
+    <title>CCNP Simulation Lab - Professional</title>
     <style>
         :root {
             --bg-dark: #1e1e1e; --card-bg: #2d2d2d; --accent: #007aff;
-            --text-color: #cccccc; --terminal-green: #00ff00;
+            --text-color: #cccccc; --terminal-green: #00ff00; --pass: #28a745; --fail: #dc3545;
         }
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-dark); color: var(--text-color); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
@@ -21,23 +21,42 @@
 
         /* 演習画面 */
         #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
-        .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #333; }
+        .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
+        .nav-right { display: flex; gap: 10px; }
+        
         .split-container { display: flex; flex: 1; overflow: hidden; }
         #left-panel { width: 35%; min-width: 250px; background: #252526; display: flex; flex-direction: column; border-right: 1px solid #111; }
         #right-panel { flex: 1; min-width: 300px; background: #000; display: flex; flex-direction: column; }
+        
         .resizer { width: 6px; cursor: col-resize; background: #333; z-index: 10; }
         .resizer:hover { background: var(--accent); }
-        .tab-bar { display: flex; background: #2d2d2d; border-bottom: 1px solid #111; overflow-x: auto; }
+
+        .tab-bar { display: flex; background: #2d2d2d; border-bottom: 1px solid #111; }
         .tab { padding: 12px 20px; cursor: pointer; font-size: 0.8rem; border-right: 1px solid #111; white-space: nowrap; color: #888; }
         .tab.active { background: #3d3d3d; color: #fff; border-bottom: 2px solid var(--accent); }
         .tab-content { flex: 1; padding: 20px; overflow-y: auto; display: none; line-height: 1.6; }
         .tab-content.active { display: block; }
+
         .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #000; font-family: 'Consolas', monospace; }
         .history { flex: 1; overflow-y: auto; margin-bottom: 10px; white-space: pre-wrap; color: #fff; font-size: 14px; }
         .input-line { display: flex; align-items: center; border-top: 1px solid #222; padding-top: 10px; }
-        .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; white-space: nowrap; }
-        #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
-        .back-btn { background: #444; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 15px; }
+        .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
+        #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; }
+
+        .btn { border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: #fff; transition: 0.2s; }
+        .back-btn { background: #444; }
+        .judge-btn { background: var(--accent); }
+        .log-btn { background: #6c757d; }
+        .btn:hover { opacity: 0.8; }
+
+        .result-group { margin-bottom: 20px; background: #333; border-radius: 8px; padding: 15px; }
+        .result-group h4 { margin: 0 0 10px 0; color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
+        .check-item input { margin-right: 10px; pointer-events: none; }
+        .status-icon { margin-left: auto; font-weight: bold; }
+        .pass-text { color: var(--pass); }
+        .fail-text { color: var(--fail); }
+
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 100; }
     </style>
 </head>
@@ -52,8 +71,14 @@
 
 <div id="lab-screen">
     <div class="top-nav">
-        <button class="back-btn" onclick="exitLab()">← 戻る</button>
-        <span id="active-lab-title" style="font-weight: bold; color: var(--accent);">Lab Name</span>
+        <div>
+            <button class="btn back-btn" onclick="exitLab()">← 戻る</button>
+            <span id="active-lab-title" style="margin-left:10px;">Lab Name</span>
+        </div>
+        <div class="nav-right">
+            <button class="btn log-btn" onclick="downloadLog()">ログ出力</button>
+            <button class="btn judge-btn" onclick="confirmJudge()">採点</button>
+        </div>
     </div>
     <div class="split-container">
         <div id="left-panel">
@@ -64,11 +89,11 @@
                 <div class="tab" onclick="switchLeftTab(3)">結果</div>
             </div>
             <div id="l-cnt-0" class="tab-content active"></div>
-            <div id="l-cnt-1" class="tab-content" style="text-align:center;">
-                <img id="sim-diagram" src="" style="max-width:100%; border:1px solid #444;">
-            </div>
+            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%; border:1px solid #444;"></div>
             <div id="l-cnt-2" class="tab-content"></div>
-            <div id="l-cnt-3" class="tab-content"><p id="judge-status">演習未完了</p></div>
+            <div id="l-cnt-3" class="tab-content">
+                <div id="judgement-display">採点ボタンを押すと結果が表示されます。</div>
+            </div>
         </div>
         <div class="resizer" id="dragMe"></div>
         <div id="right-panel">
@@ -88,20 +113,15 @@
     // ★重要：デプロイしたGASのURLに書き換えてください
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxIKZ3_UWKJ3bcufQZuAyx3_jWSCnoo76KvmNIFD9S4n50DT2MYN_ble04efT5l1dbO/exec"; 
 
-    let labs = [];
-    let currentLab = null;
-    let deviceState = {};
-    let activeId = '';
+    let labs = [], currentLab = null, deviceState = {}, activeId = '';
 
     window.onload = async () => {
         try {
-            const response = await fetch(`${GAS_URL}?type=simList`);
-            labs = await response.json();
+            const res = await fetch(`${GAS_URL}?type=simList`);
+            labs = await res.json();
             document.getElementById('loading-overlay').style.display = 'none';
             renderSelectionScreen();
-        } catch (e) {
-            document.getElementById('loading-overlay').innerText = "データ取得エラー。GASのURLを確認してください。";
-        }
+        } catch (e) { document.getElementById('loading-overlay').innerText = "Load Error. Check GAS URL."; }
     };
 
     function renderSelectionScreen() {
@@ -111,48 +131,120 @@
             const card = document.createElement('div');
             card.className = 'lab-card';
             card.onclick = () => startLab(lab);
-            card.innerHTML = `<span class="lab-num">Simulation ${lab.id}</span><div class="lab-title">${lab.title}</div>`;
+            card.innerHTML = `<span class="lab-num">Sim ${lab.id}</span><div class="lab-title">${lab.title}</div>`;
             list.appendChild(card);
         });
     }
 
     function startLab(lab) {
         currentLab = lab;
+        currentLab.answerList = lab.answers ? lab.answers.split(',').map(s => s.trim()) : [];
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('lab-screen').style.display = 'flex';
         document.getElementById('active-lab-title').innerText = lab.title;
-        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${(lab.desc || "").replace(/\n/g, '<br>')}</p>`;
-        document.getElementById('l-cnt-2').innerHTML = `<h3>Task List</h3><p>${(lab.task || "").replace(/\n/g, '<br>')}</p>`;
+        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${(lab.desc||"").replace(/\n/g,'<br>')}</p>`;
+        document.getElementById('l-cnt-2').innerHTML = `<h3>Task List</h3><p>${(lab.task||"").replace(/\n/g,'<br>')}</p>`;
         document.getElementById('sim-diagram').src = `simulation/sim${lab.id}.png`;
+        document.getElementById('judgement-display').innerHTML = "採点ボタンを押すと結果が表示されます。";
 
         const tabsEl = document.getElementById('device-tabs');
         tabsEl.innerHTML = '';
         deviceState = {};
         lab.devices.forEach((dev, idx) => {
             const name = dev.trim();
-            deviceState[name] = { 
-                history: `${name} Console Initialized.\n`, 
-                prompt: `${name}>`, 
-                configBody: lab.initialConfigs[name] || "!",
-                currentPath: [], // 階層管理用
-                currentInput: "" 
-            };
+            deviceState[name] = { history: `${name} Console Log ---\n`, prompt: `${name}>`, configBody: lab.initialConfigs[name]||"!", currentPath: [], currentInput: "" };
             const tab = document.createElement('div');
-            tab.className = `tab ${idx === 0 ? 'active' : ''}`;
-            tab.innerText = name;
-            tab.onclick = () => switchDevice(name);
+            tab.className = `tab ${idx===0?'active':''}`; tab.innerText = name; tab.onclick = () => switchDevice(name);
             tabsEl.appendChild(tab);
         });
         switchDevice(lab.devices[0].trim());
     }
 
+    // ① 採点ボタンの処理 (確認ダイアログ付き)
+    function confirmJudge() {
+        if(confirm("採点を実施しますか？\n（現在の入力履歴に基づいて判定を行います）")) {
+            switchLeftTab(3); // 結果タブを表示
+            runJudge();
+        }
+    }
+
+    // ② ログ出力 (確認ダイアログ付き)
+    function downloadLog() {
+        if (!confirm("これまでの操作ログをテキストファイルとして出力（ダウンロード）しますか？")) {
+            return;
+        }
+
+        let fullLog = `CCNP Lab Simulation Log\nLab: ${currentLab.title}\nDate: ${new Date().toLocaleString()}\n--------------------------\n\n`;
+        for (let dev in deviceState) {
+            fullLog += `[[ ${dev} LOG ]]\n${deviceState[dev].history}\n\n`;
+        }
+        
+        try {
+            const blob = new Blob([fullLog], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            a.href = url;
+            a.download = `Log_${currentLab.title}_${timestamp}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert("ログを出力しました。ダウンロードフォルダを確認してください。");
+        } catch (e) {
+            alert("ログ出力に失敗しました。");
+        }
+    }
+
+    // ③ 採点ロジック (機器別にグループ化)
+    function runJudge() {
+        if (!currentLab || !currentLab.answerList) return;
+        
+        let score = 0;
+        const deviceGroups = {};
+
+        currentLab.answerList.forEach(ans => {
+            const [dev, cmd] = ans.split(':');
+            if(!deviceGroups[dev]) deviceGroups[dev] = [];
+            
+            const isDone = deviceState[dev]?.history.toLowerCase().includes(cmd.toLowerCase());
+            if(isDone) score++;
+            deviceGroups[dev].push({ cmd, isDone });
+        });
+
+        let html = `<h3>採点結果</h3>`;
+        html += `<p style="font-weight:bold;">進捗: ${score} / ${currentLab.answerList.length}</p>`;
+
+        for (let dev in deviceGroups) {
+            html += `<div class="result-group"><h4>${dev}</h4>`;
+            deviceGroups[dev].forEach(item => {
+                const statusClass = item.isDone ? "pass-text" : "fail-text";
+                const statusMark = item.isDone ? "○" : "×";
+                html += `
+                    <div class="check-item">
+                        <input type="checkbox" ${item.isDone ? 'checked' : ''}>
+                        <span>${item.cmd}</span>
+                        <span class="status-icon ${statusClass}">${statusMark}</span>
+                    </div>`;
+            });
+            html += `</div>`;
+        }
+
+        if (currentLab.comment) {
+            html += `<div style="margin-top:20px; padding:15px; background:#333; border-radius:8px; border-left:4px solid var(--accent);">
+                        <b style="color:var(--accent);">解説・Tips:</b><br>${currentLab.comment.replace(/\n/g, '<br>')}
+                     </div>`;
+        }
+        document.getElementById('judgement-display').innerHTML = html;
+    }
+
+    // --- 基本エンジン ---
     function switchDevice(id) {
         if(activeId) deviceState[activeId].currentInput = document.getElementById('cmd-input').value;
         activeId = id;
         document.querySelectorAll('#device-tabs .tab').forEach(t => t.classList.toggle('active', t.innerText === id));
         renderTerminal();
     }
-
     function renderTerminal() {
         const dev = deviceState[activeId];
         document.getElementById('terminal-history').innerText = dev.history;
@@ -161,110 +253,33 @@
         document.getElementById('terminal-history').scrollTop = 99999;
         document.getElementById('cmd-input').focus();
     }
-
-    // --- コンフィグ更新エンジン ---
-    function updateConfig(dev, path, keyword, newLine) {
-        if (!dev.configBody) dev.configBody = "!";
-        const parentHeader = path[path.length - 1];
-        // セクション検索（親ヘッダーから ! まで）
-        const sectionRegex = new RegExp(`(${parentHeader}[\\s\\S]*?)(^!|(?=^\\w))`, "m");
-
-        if (sectionRegex.test(dev.configBody)) {
-            dev.configBody = dev.configBody.replace(sectionRegex, (match, content, footer) => {
-                const lineRegex = new RegExp(`^\\s*${keyword}.*`, "m");
-                if (lineRegex.test(content)) {
-                    return (newLine === "") ? content.replace(lineRegex, "").trimEnd() + "\n" + footer : content.replace(lineRegex, newLine) + footer;
-                } else {
-                    return content.trimEnd() + "\n" + newLine + "\n" + footer;
-                }
-            });
-        } else {
-            // 新規セクション作成
-            let newBlock = "\n" + path.join("\n ") + "\n " + newLine + "\n!\n";
-            dev.configBody = dev.configBody.trimEnd() + newBlock;
-        }
-    }
-
-    // --- コマンド入力メイン処理 ---
     document.getElementById('cmd-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') {
-            const val = e.target.value.trim();
-            const low = val.toLowerCase();
-            const dev = deviceState[activeId];
+            const val = e.target.value.trim(), low = val.toLowerCase(), dev = deviceState[activeId];
             dev.history += dev.prompt + " " + val + "\n";
-
-            // 1. 特殊コマンド: show run
             if (low === "sh run" || low === "show running-config") {
                 dev.history += "Building configuration...\n\n" + (dev.configBody || "!") + "\n";
-            }
-            // 2. 階層移動（グローバル設定）
-            else if (low === "en" || low === "enable") dev.prompt = activeId + "#";
+            } else if (low === "en" || low === "enable") dev.prompt = activeId + "#";
             else if (low === "conf t") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
-            else if (low.startsWith("int ")) {
-                const ifName = val.split(" ")[1];
-                dev.currentPath = ["interface " + ifName];
-                dev.prompt = `${activeId}(config-if)#`;
-            }
-            else if (low.startsWith("router eigrp ")) {
-                dev.currentPath = [val];
-                dev.prompt = `${activeId}(config-router)#`;
-            }
-            else if (low.startsWith("policy-map ")) {
-                dev.currentPath = [val];
-                dev.prompt = `${activeId}(config-pmap)#`;
-            }
-            else if (dev.currentPath.length > 0 && low.startsWith("class ")) {
-                dev.currentPath.push(val);
-                dev.prompt = `${activeId}(config-pmap-c)#`;
-            }
-            // 3. 階層を戻る
+            else if (low.startsWith("int ")) { dev.currentPath = ["interface " + val.split(" ")[1]]; dev.prompt = `${activeId}(config-if)#`; }
             else if (low === "exit") {
-                if (dev.currentPath.length > 0) {
-                    dev.currentPath.pop();
-                    if (dev.currentPath.length === 0) dev.prompt = activeId + "(config)#";
-                    else if (dev.currentPath.length === 1) dev.prompt = activeId + "(config-pmap)#";
-                } else if (dev.prompt.includes("(config)")) {
-                    dev.prompt = activeId + "#";
-                } else {
-                    dev.prompt = activeId + ">";
-                }
+                if (dev.currentPath.length > 0) { dev.currentPath.pop(); dev.prompt = activeId + (dev.currentPath.length > 0 ? "(config-pmap)#" : "(config)#"); }
+                else dev.prompt = dev.prompt.includes("(config)") ? activeId + "#" : activeId + ">";
             }
-            // 4. 設定反映（階層に応じた更新）
-            else if (dev.currentPath.length > 0) {
-                const indent = " ".repeat(dev.currentPath.length);
-                if (low.startsWith("ip address ")) {
-                    updateConfig(dev, dev.currentPath, "ip address", indent + val);
-                } else if (low === "no shutdown" || low === "shutdown") {
-                    updateConfig(dev, dev.currentPath, "shutdown", (low === "shutdown" ? indent + " shutdown" : ""));
-                } else if (low.startsWith("network ") || low.startsWith("eigrp router-id ")) {
-                    updateConfig(dev, dev.currentPath, val.split(" ")[0], indent + val);
-                } else if (low.startsWith("police ")) {
-                    updateConfig(dev, dev.currentPath, "police", indent + val);
-                }
-            }
-
-            e.target.value = "";
-            dev.currentInput = "";
-            renderTerminal();
+            e.target.value = ""; dev.currentInput = ""; renderTerminal();
         }
     });
-
-    // ユーティリティ
-    function exitLab() { if(confirm("メニューに戻りますか？")) { document.getElementById('selection-screen').style.display = 'flex'; document.getElementById('lab-screen').style.display = 'none'; } }
     function switchLeftTab(idx) {
         document.querySelectorAll('#left-panel .tab').forEach((t, i) => t.classList.toggle('active', i === idx));
         document.querySelectorAll('#left-panel .tab-content').forEach((c, i) => c.classList.toggle('active', i === idx));
     }
+    function exitLab() { if(confirm("メニューに戻りますか？")) { document.getElementById('selection-screen').style.display = 'flex'; document.getElementById('lab-screen').style.display = 'none'; } }
     const resizer = document.getElementById('dragMe');
-    const leftPanel = document.getElementById('left-panel');
     resizer.addEventListener('mousedown', (e) => {
+        const resize = (e) => { let w = (e.clientX/window.innerWidth)*100; if(w>15 && w<70) document.getElementById('left-panel').style.width = w+'%'; };
         document.addEventListener('mousemove', resize);
         document.addEventListener('mouseup', () => document.removeEventListener('mousemove', resize));
     });
-    function resize(e) {
-        const newWidth = (e.clientX / window.innerWidth) * 100;
-        if (newWidth > 15 && newWidth < 70) leftPanel.style.width = newWidth + '%';
-    }
 </script>
 </body>
 </html>
