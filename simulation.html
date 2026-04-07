@@ -142,15 +142,21 @@
         });
     }
 
-    // 2. 演習開始処理
+// 2. 演習開始処理（改行対応版）
     function startLab(lab) {
         currentLab = lab;
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('lab-screen').style.display = 'flex';
         document.getElementById('active-lab-title').innerText = lab.title;
         
-        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${lab.desc}</p>`;
-        document.getElementById('l-cnt-2').innerHTML = `<h3>Task List</h3><p>${lab.task.replace(/\n/g, '<br>')}</p>`;
+        // 【修正ポイント】 .replace(/\n/g, '<br>') を追加
+        // これにより、セル内の改行がHTMLの改行タグに変換されます
+        const formattedDesc = lab.desc ? lab.desc.replace(/\n/g, '<br>') : "";
+        const formattedTask = lab.task ? lab.task.replace(/\n/g, '<br>') : "";
+
+        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${formattedDesc}</p>`;
+        document.getElementById('l-cnt-2').innerHTML = `<h3>Task List</h3><p>${formattedTask}</p>`;
+        
         document.getElementById('sim-diagram').src = `simulation/sim${lab.id}.png`;
 
         // 機器状態の初期化
@@ -166,7 +172,9 @@
             tab.onclick = () => switchDevice(name);
             tabsEl.appendChild(tab);
         });
-        switchDevice(lab.devices[0].trim());
+        if (lab.devices.length > 0) {
+            switchDevice(lab.devices[0].trim());
+        }
     }
 
     function exitLab() {
