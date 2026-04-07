@@ -39,18 +39,21 @@
         .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
         #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
 
-        /* 採点表示 */
-        .result-group { margin-bottom: 20px; background: #333; border-radius: 8px; padding: 15px; }
-        .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
-        .check-item input { margin-right: 10px; }
-        .pass-text { color: var(--pass); font-weight: bold; margin-left: auto; }
-        .fail-text { color: var(--fail); font-weight: bold; margin-left: auto; }
+        /* 採点表示スタイル */
+        .task-block { margin-bottom: 30px; }
+        .task-title { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; }
+        .device-group { margin-bottom: 15px; padding-left: 10px; }
+        .device-name { font-weight: bold; color: #fff; margin-bottom: 5px; font-size: 0.95rem; }
+        .cmd-row { display: flex; align-items: center; padding-left: 15px; margin-bottom: 4px; font-size: 0.9rem; border-bottom: 1px dashed #333; }
+        .cmd-text { flex: 1; color: #bbb; }
+        .pass-text { color: var(--pass); font-weight: bold; }
+        .fail-text { color: var(--fail); font-weight: bold; }
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">Loading CCNP Simulation Engine...</div>
+<div id="loading-overlay">Loading Simulation Lab...</div>
 
 <div id="selection-screen">
     <h1>Simulation Lab Selection</h1>
@@ -74,7 +77,7 @@
                 <div class="tab" onclick="switchLeftTab(3)">結果</div>
             </div>
             <div id="l-cnt-0" class="tab-content active"></div>
-            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%; border:1px solid #444;"></div>
+            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%;"></div>
             <div id="l-cnt-2" class="tab-content"></div>
             <div id="l-cnt-3" class="tab-content"><div id="judgement-display">採点ボタンを押してください。</div></div>
         </div>
@@ -93,7 +96,7 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxIKZ3_UWKJ3bcufQZuAyx3_jWSCnoo76KvmNIFD9S4n50DT2MYN_ble04efT5l1dbO/exec"; // ★書き換え
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxIKZ3_UWKJ3bcufQZuAyx3_jWSCnoo76KvmNIFD9S4n50DT2MYN_ble04efT5l1dbO/exec"; // ★書き換え必須
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
 
     window.onload = async () => {
@@ -123,7 +126,7 @@
         document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${(lab.desc||"").replace(/\n/g,'<br>')}</p>`;
         document.getElementById('l-cnt-2').innerHTML = `<h3>Tasks</h3><p>${(lab.task||"").replace(/\n/g,'<br>')}</p>`;
         document.getElementById('sim-diagram').src = `simulation/sim${lab.id}.png`;
-        document.getElementById('judgement-display').innerText = "採点ボタンを押すと結果が表示されます。";
+        document.getElementById('judgement-display').innerText = "採点ボタンを押してください。";
 
         const tabsEl = document.getElementById('device-tabs'); tabsEl.innerHTML = '';
         deviceState = {};
@@ -137,6 +140,7 @@
         switchDevice(lab.devices[0].trim());
     }
 
+    // --- コマンド解析エンジン ---
     function handleCommand(input, dev) {
         const inputWords = input.trim().split(/\s+/);
         if (inputWords[0] === "") return false;
@@ -152,128 +156,11 @@
             for (let i = 0; i < cmdWords.length; i++) {
                 const cw = cmdWords[i].toLowerCase(); const iw = (inputWords[i] || "").toLowerCase();
                 if (cw.startsWith("{")) { finalAction = finalAction.replace(cmdWords[i], inputWords[i]); continue; }
-                // 2文字以上かつ前方一致判定
                 if (iw.length >= 2 && cw.startsWith(iw)) continue;
                 if (cw === iw) continue;
                 isMatch = false; break;
             }
 
             if (isMatch) {
-                if (input.length < 5 && input !== cmd.pattern && cmd.type !== "モード切替") continue; // 5文字ルール
-                if (cmd.type === "表示") { dev.history += (cmd.output || "") + "\n"; }
-                else if (cmd.type === "モード切替") {
-                    dev.currentPath.push(input);
-                    let sfx = "config"; const low0 = inputWords[0].toLowerCase();
-                    if (low0.startsWith("int")) sfx = "config-if";
-                    else if (low0.startsWith("rou")) sfx = "config-router";
-                    else if (low0.startsWith("pol")) sfx = "config-pmap";
-                    else if (low0.startsWith("cla")) sfx = "config-pmap-c";
-                    else if (low0.startsWith("vla")) sfx = "config-vlan";
-                    dev.prompt = `${activeId}(${sfx})#`;
-                }
-                else if (cmd.type === "設定") {
-                    const indent = " ".repeat(dev.currentPath.length + 1);
-                    if (inputWords[0].toLowerCase() === "no") updateConfig(dev, dev.currentPath, cmdWords[1], "");
-                    else updateConfig(dev, dev.currentPath, cmdWords[0], indent + input);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function updateConfig(dev, path, keyword, newLine) {
-        if (!dev.configBody) dev.configBody = "!";
-        const parent = path.length > 0 ? path[path.length - 1] : "";
-        if (!parent) {
-            const reg = new RegExp(`^${keyword}.*`, "m");
-            if (reg.test(dev.configBody)) dev.configBody = (newLine==="") ? dev.configBody.replace(reg, "").trim() : dev.configBody.replace(reg, newLine);
-            else dev.configBody += "\n" + newLine;
-            return;
-        }
-        const sReg = new RegExp(`(${parent}[\\s\\S]*?)(^!|(?=^\\w))`, "m");
-        if (sReg.test(dev.configBody)) {
-            dev.configBody = dev.configBody.replace(sReg, (m, c, f) => {
-                const lReg = new RegExp(`^\\s*${keyword}.*`, "m");
-                if (lReg.test(c)) return (newLine==="") ? c.replace(lReg, "").trimEnd() + "\n" + f : c.replace(lReg, newLine) + f;
-                else return c.trimEnd() + "\n" + newLine + "\n" + f;
-            });
-        } else {
-            dev.configBody = dev.configBody.trimEnd() + "\n" + path.join("\n ") + "\n " + newLine + "\n!\n";
-        }
-    }
-
-    document.getElementById('cmd-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-            const val = e.target.value.trim(), low = val.toLowerCase(), dev = deviceState[activeId];
-            if (val === "") { dev.history += dev.prompt + "\n"; } else {
-                dev.history += dev.prompt + " " + val + "\n";
-                if (low === "sh run" || low === "show running-config") dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
-                else if (low === "en" || low === "enable") dev.prompt = activeId + "#";
-                else if (low === "conf t" || low === "configure terminal") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
-                else if (low === "exit") {
-                    if (dev.currentPath.length > 0) { dev.currentPath.pop(); dev.prompt = activeId + (dev.currentPath.length > 0 ? "(config-pmap)#" : "(config)#"); }
-                    else dev.prompt = dev.prompt.includes("(config)") ? activeId + "#" : activeId + ">";
-                } else { if (!handleCommand(val, dev)) dev.history += "% Unknown command.\n"; }
-            }
-            e.target.value = ""; renderTerminal();
-        }
-    });
-
-    function switchDevice(id) { if(activeId) deviceState[activeId].currentInput = document.getElementById('cmd-input').value; activeId = id; renderTerminal(); }
-    function renderTerminal() {
-        const dev = deviceState[activeId];
-        document.getElementById('terminal-history').innerText = dev.history;
-        document.getElementById('current-prompt').innerText = dev.prompt;
-        document.getElementById('cmd-input').value = dev.currentInput || "";
-        document.getElementById('terminal-history').scrollTop = 99999;
-        document.getElementById('cmd-input').focus();
-    }
-    function switchLeftTab(idx) {
-        document.querySelectorAll('#left-panel .tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-        document.querySelectorAll('#left-panel .tab-content').forEach((c, i) => c.classList.toggle('active', i === idx));
-    }
-    function confirmJudge() { if(confirm("採点を実施しますか？")) { switchLeftTab(3); runJudge(); } }
-    
-    function runJudge() {
-        const judgeList = currentLab.answers.split(',').map(s => s.trim());
-        const displayList = currentLab.displayAnswers ? currentLab.displayAnswers.split(',').map(s => s.trim()) : judgeList;
-        const groups = {}; let score = 0;
-        
-        judgeList.forEach((jItem, idx) => {
-            const [dev, jCmd] = jItem.split(':');
-            const [__, dCmd] = displayList[idx].split(':');
-            if(!groups[dev]) groups[dev] = [];
-            const ok = deviceState[dev]?.history.toLowerCase().includes(jCmd.toLowerCase());
-            if(ok) score++; groups[dev].push({ cmd: dCmd || jCmd, ok });
-        });
-
-        let html = `<h3>進捗: ${score}/${judgeList.length}</h3>`;
-        for (let dev in groups) {
-            html += `<div class="result-group"><h4>${dev}</h4>`;
-            groups[dev].forEach(i => {
-                html += `<div class="check-item"><input type="checkbox" ${i.ok?'checked':''} disabled> <span>${i.cmd}</span><span class="${i.ok?'pass-text':'fail-text'}">${i.ok?'○':'×'}</span></div>`;
-            });
-            html += `</div>`;
-        }
-        if(currentLab.comment) html += `<div style="padding:10px;background:#111;border-radius:5px;font-size:0.9rem;"><b>Tips:</b><br>${currentLab.comment.replace(/\n/g,'<br>')}</div>`;
-        document.getElementById('judgement-display').innerHTML = html;
-    }
-
-    function downloadLog() {
-        if(!confirm("操作ログを出力しますか？")) return;
-        let log = `CCNP Lab Log - ${currentLab.title}\n${new Date().toLocaleString()}\n`;
-        for(let d in deviceState) log += `\n[${d}]\n${deviceState[d].history}`;
-        const b = new Blob([log], {type:'text/plain'}); const u = URL.createObjectURL(b);
-        const a = document.createElement('a'); a.href = u; a.download = `Log_${currentLab.id}.txt`; a.click();
-    }
-    function exitLab() { if(confirm("メニューに戻りますか？")) { document.getElementById('selection-screen').style.display='flex'; document.getElementById('lab-screen').style.display='none'; } }
-    
-    const resizer = document.getElementById('dragMe');
-    resizer.onmousedown = (e) => {
-        document.onmousemove = (ev) => { let w = (ev.clientX/window.innerWidth)*100; if(w>15 && w<70) document.getElementById('left-panel').style.width = w+'%'; };
-        document.onmouseup = () => document.onmousemove = null;
-    };
-</script>
-</body>
-</html>
+                if (input.length < 5 && input !== cmd.pattern && cmd.type !== "モード切替") continue;
+                if
