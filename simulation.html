@@ -205,11 +205,21 @@
             // 履歴にコマンドを記録
             dev.history += dev.prompt + " " + val + "\n";
 
-            // --- ① show running-config の処理 ---
-            if (low === "sh run" || low === "show running-config") {
-                // スプシから読み込んだ初期コンフィグ（または変更後）を表示
-                dev.history += (dev.configBody || "Building configuration...\n\nCurrent configuration : 0 bytes\n!") + "\n";
-            } 
+// --- ① show running-config の処理 ---
+if (low === "sh run" || low === "show running-config") {
+    // 1. まず必ず「Building configuration...」を表示
+    let output = "Building configuration...\n\n";
+
+    // 2. スプシにConfigがあればそれを表示、なければ「!」を表示
+    if (dev.configBody && dev.configBody.trim() !== "") {
+        output += dev.configBody;
+    } else {
+        output += "!\nend";
+    }
+
+    // 3. 履歴に追加して、最後に改行を入れる
+    dev.history += output + "\n";
+}
             // プロンプト切替ロジック（既存分）
             else if (low === "en" || low === "enable") dev.prompt = activeId + "#";
             else if (low === "conf t") dev.prompt = activeId + "(config)#";
