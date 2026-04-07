@@ -3,68 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCNP Simulation Lab</title>
+    <title>CCNP Simulation Lab - Pro Engine</title>
     <style>
         :root {
-            --bg-dark: #1e1e1e;
-            --card-bg: #2d2d2d;
-            --accent: #007aff;
-            --text-color: #cccccc;
-            --terminal-green: #00ff00;
+            --bg-dark: #1e1e1e; --card-bg: #2d2d2d; --accent: #007aff;
+            --text-color: #cccccc; --terminal-green: #00ff00;
         }
-
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-dark); color: var(--text-color); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-
-        /* --- 選択画面 --- */
-        #selection-screen {
-            height: 100vh; overflow-y: auto; padding: 40px 20px; box-sizing: border-box;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .lab-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px; width: 100%; max-width: 1000px; margin-top: 30px;
-        }
-        .lab-card {
-            background: var(--card-bg); border: 1px solid #444; border-radius: 12px;
-            padding: 20px; cursor: pointer; transition: 0.3s;
-        }
+        
+        /* 選択画面 */
+        #selection-screen { height: 100vh; overflow-y: auto; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
+        .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 30px; }
+        .lab-card { background: var(--card-bg); border: 1px solid #444; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.3s; }
         .lab-card:hover { border-color: var(--accent); transform: translateY(-3px); background: #353535; }
         .lab-num { color: var(--accent); font-weight: bold; font-size: 0.8rem; margin-bottom: 5px; display: block; }
         .lab-title { font-size: 1.1rem; font-weight: 600; color: #fff; }
 
-        /* --- 演習画面 --- */
+        /* 演習画面 */
         #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
-        .split-container { display: flex; flex: 1; width: 100vw; overflow: hidden; }
-        
+        .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #333; }
+        .split-container { display: flex; flex: 1; overflow: hidden; }
         #left-panel { width: 35%; min-width: 250px; background: #252526; display: flex; flex-direction: column; border-right: 1px solid #111; }
         #right-panel { flex: 1; min-width: 300px; background: #000; display: flex; flex-direction: column; }
-        
         .resizer { width: 6px; cursor: col-resize; background: #333; z-index: 10; }
         .resizer:hover { background: var(--accent); }
-
         .tab-bar { display: flex; background: #2d2d2d; border-bottom: 1px solid #111; overflow-x: auto; }
         .tab { padding: 12px 20px; cursor: pointer; font-size: 0.8rem; border-right: 1px solid #111; white-space: nowrap; color: #888; }
         .tab.active { background: #3d3d3d; color: #fff; border-bottom: 2px solid var(--accent); }
-
         .tab-content { flex: 1; padding: 20px; overflow-y: auto; display: none; line-height: 1.6; }
         .tab-content.active { display: block; }
-
-        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #000; font-family: 'Consolas', 'Monaco', monospace; }
+        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #000; font-family: 'Consolas', monospace; }
         .history { flex: 1; overflow-y: auto; margin-bottom: 10px; white-space: pre-wrap; color: #fff; font-size: 14px; }
         .input-line { display: flex; align-items: center; border-top: 1px solid #222; padding-top: 10px; }
         .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; white-space: nowrap; }
         #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
-        
-        .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
-        .back-btn { background: #444; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .back-btn:hover { background: #666; }
-
+        .back-btn { background: #444; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 15px; }
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 100; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">Loading Labs...</div>
+<div id="loading-overlay">Loading Lab Engine...</div>
 
 <div id="selection-screen">
     <h1>Simulation Lab Selection</h1>
@@ -73,10 +52,8 @@
 
 <div id="lab-screen">
     <div class="top-nav">
-        <div>
-            <button class="back-btn" onclick="exitLab()">← 戻る</button>
-            <span id="active-lab-title" style="margin-left:15px; font-weight: bold; color: var(--accent);">Lab Name</span>
-        </div>
+        <button class="back-btn" onclick="exitLab()">← 戻る</button>
+        <span id="active-lab-title" style="font-weight: bold; color: var(--accent);">Lab Name</span>
     </div>
     <div class="split-container">
         <div id="left-panel">
@@ -88,14 +65,12 @@
             </div>
             <div id="l-cnt-0" class="tab-content active"></div>
             <div id="l-cnt-1" class="tab-content" style="text-align:center;">
-                <img id="sim-diagram" src="" style="max-width:100%; border:1px solid #444;" alt="Loading Diagram...">
+                <img id="sim-diagram" src="" style="max-width:100%; border:1px solid #444;">
             </div>
             <div id="l-cnt-2" class="tab-content"></div>
             <div id="l-cnt-3" class="tab-content"><p id="judge-status">演習未完了</p></div>
         </div>
-
         <div class="resizer" id="dragMe"></div>
-
         <div id="right-panel">
             <div class="tab-bar" id="device-tabs"></div>
             <div class="terminal-wrapper">
@@ -118,7 +93,6 @@
     let deviceState = {};
     let activeId = '';
 
-    // 1. データ取得（スプレッドシートから）
     window.onload = async () => {
         try {
             const response = await fetch(`${GAS_URL}?type=simList`);
@@ -126,7 +100,7 @@
             document.getElementById('loading-overlay').style.display = 'none';
             renderSelectionScreen();
         } catch (e) {
-            document.getElementById('loading-overlay').innerText = "データの取得に失敗しました。URLを確認してください。";
+            document.getElementById('loading-overlay').innerText = "データ取得エラー。GASのURLを確認してください。";
         }
     };
 
@@ -142,112 +116,145 @@
         });
     }
 
-// 2. 演習開始処理（改行対応版）
     function startLab(lab) {
         currentLab = lab;
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('lab-screen').style.display = 'flex';
         document.getElementById('active-lab-title').innerText = lab.title;
-        
-        // 【修正ポイント】 .replace(/\n/g, '<br>') を追加
-        // これにより、セル内の改行がHTMLの改行タグに変換されます
-        const formattedDesc = lab.desc ? lab.desc.replace(/\n/g, '<br>') : "";
-        const formattedTask = lab.task ? lab.task.replace(/\n/g, '<br>') : "";
-
-        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${formattedDesc}</p>`;
-        document.getElementById('l-cnt-2').innerHTML = `<h3>Task List</h3><p>${formattedTask}</p>`;
-        
+        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${(lab.desc || "").replace(/\n/g, '<br>')}</p>`;
+        document.getElementById('l-cnt-2').innerHTML = `<h3>Task List</h3><p>${(lab.task || "").replace(/\n/g, '<br>')}</p>`;
         document.getElementById('sim-diagram').src = `simulation/sim${lab.id}.png`;
 
-        // 機器状態の初期化
         const tabsEl = document.getElementById('device-tabs');
         tabsEl.innerHTML = '';
         deviceState = {};
         lab.devices.forEach((dev, idx) => {
             const name = dev.trim();
-            deviceState[name] = { history: `${name} Console Initialized.\n`, prompt: `${name}>`, currentInput: "" };
+            deviceState[name] = { 
+                history: `${name} Console Initialized.\n`, 
+                prompt: `${name}>`, 
+                configBody: lab.initialConfigs[name] || "!",
+                currentPath: [], // 階層管理用
+                currentInput: "" 
+            };
             const tab = document.createElement('div');
             tab.className = `tab ${idx === 0 ? 'active' : ''}`;
             tab.innerText = name;
             tab.onclick = () => switchDevice(name);
             tabsEl.appendChild(tab);
         });
-        if (lab.devices.length > 0) {
-            switchDevice(lab.devices[0].trim());
-        }
+        switchDevice(lab.devices[0].trim());
     }
 
-    function exitLab() {
-        if(confirm("演習を終了してメニューに戻りますか？")) {
-            document.getElementById('selection-screen').style.display = 'flex';
-            document.getElementById('lab-screen').style.display = 'none';
-        }
-    }
-
-    // 3. 機器切り替え（履歴と入力を保持）
     function switchDevice(id) {
         if(activeId) deviceState[activeId].currentInput = document.getElementById('cmd-input').value;
         activeId = id;
         document.querySelectorAll('#device-tabs .tab').forEach(t => t.classList.toggle('active', t.innerText === id));
-        document.getElementById('terminal-history').innerText = deviceState[id].history;
-        document.getElementById('current-prompt').innerText = deviceState[id].prompt;
-        document.getElementById('cmd-input').value = deviceState[id].currentInput;
+        renderTerminal();
+    }
+
+    function renderTerminal() {
+        const dev = deviceState[activeId];
+        document.getElementById('terminal-history').innerText = dev.history;
+        document.getElementById('current-prompt').innerText = dev.prompt;
+        document.getElementById('cmd-input').value = dev.currentInput || "";
+        document.getElementById('terminal-history').scrollTop = 99999;
         document.getElementById('cmd-input').focus();
     }
 
-// コマンド入力処理
+    // --- コンフィグ更新エンジン ---
+    function updateConfig(dev, path, keyword, newLine) {
+        if (!dev.configBody) dev.configBody = "!";
+        const parentHeader = path[path.length - 1];
+        // セクション検索（親ヘッダーから ! まで）
+        const sectionRegex = new RegExp(`(${parentHeader}[\\s\\S]*?)(^!|(?=^\\w))`, "m");
+
+        if (sectionRegex.test(dev.configBody)) {
+            dev.configBody = dev.configBody.replace(sectionRegex, (match, content, footer) => {
+                const lineRegex = new RegExp(`^\\s*${keyword}.*`, "m");
+                if (lineRegex.test(content)) {
+                    return (newLine === "") ? content.replace(lineRegex, "").trimEnd() + "\n" + footer : content.replace(lineRegex, newLine) + footer;
+                } else {
+                    return content.trimEnd() + "\n" + newLine + "\n" + footer;
+                }
+            });
+        } else {
+            // 新規セクション作成
+            let newBlock = "\n" + path.join("\n ") + "\n " + newLine + "\n!\n";
+            dev.configBody = dev.configBody.trimEnd() + newBlock;
+        }
+    }
+
+    // --- コマンド入力メイン処理 ---
     document.getElementById('cmd-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') {
             const val = e.target.value.trim();
             const low = val.toLowerCase();
             const dev = deviceState[activeId];
-
-            // 履歴にコマンドを記録
             dev.history += dev.prompt + " " + val + "\n";
 
-// --- ① show running-config の処理 ---
-if (low === "sh run" || low === "show running-config") {
-    // 1. まず必ず「Building configuration...」を表示
-    let output = "Building configuration...\n\n";
-
-    // 2. スプシにConfigがあればそれを表示、なければ「!」を表示
-    if (dev.configBody && dev.configBody.trim() !== "") {
-        output += dev.configBody;
-    } else {
-        output += "!\nend";
-    }
-
-    // 3. 履歴に追加して、最後に改行を入れる
-    dev.history += output + "\n";
-}
-            // プロンプト切替ロジック（既存分）
+            // 1. 特殊コマンド: show run
+            if (low === "sh run" || low === "show running-config") {
+                dev.history += "Building configuration...\n\n" + (dev.configBody || "!") + "\n";
+            }
+            // 2. 階層移動（グローバル設定）
             else if (low === "en" || low === "enable") dev.prompt = activeId + "#";
-            else if (low === "conf t") dev.prompt = activeId + "(config)#";
-            else if (low === "exit") dev.prompt = activeId + ">";
-            else if (val !== "") {
-                dev.history += "% Unknown command.\n";
+            else if (low === "conf t") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
+            else if (low.startsWith("int ")) {
+                const ifName = val.split(" ")[1];
+                dev.currentPath = ["interface " + ifName];
+                dev.prompt = `${activeId}(config-if)#`;
+            }
+            else if (low.startsWith("router eigrp ")) {
+                dev.currentPath = [val];
+                dev.prompt = `${activeId}(config-router)#`;
+            }
+            else if (low.startsWith("policy-map ")) {
+                dev.currentPath = [val];
+                dev.prompt = `${activeId}(config-pmap)#`;
+            }
+            else if (dev.currentPath.length > 0 && low.startsWith("class ")) {
+                dev.currentPath.push(val);
+                dev.prompt = `${activeId}(config-pmap-c)#`;
+            }
+            // 3. 階層を戻る
+            else if (low === "exit") {
+                if (dev.currentPath.length > 0) {
+                    dev.currentPath.pop();
+                    if (dev.currentPath.length === 0) dev.prompt = activeId + "(config)#";
+                    else if (dev.currentPath.length === 1) dev.prompt = activeId + "(config-pmap)#";
+                } else if (dev.prompt.includes("(config)")) {
+                    dev.prompt = activeId + "#";
+                } else {
+                    dev.prompt = activeId + ">";
+                }
+            }
+            // 4. 設定反映（階層に応じた更新）
+            else if (dev.currentPath.length > 0) {
+                const indent = " ".repeat(dev.currentPath.length);
+                if (low.startsWith("ip address ")) {
+                    updateConfig(dev, dev.currentPath, "ip address", indent + val);
+                } else if (low === "no shutdown" || low === "shutdown") {
+                    updateConfig(dev, dev.currentPath, "shutdown", (low === "shutdown" ? indent + " shutdown" : ""));
+                } else if (low.startsWith("network ") || low.startsWith("eigrp router-id ")) {
+                    updateConfig(dev, dev.currentPath, val.split(" ")[0], indent + val);
+                } else if (low.startsWith("police ")) {
+                    updateConfig(dev, dev.currentPath, "police", indent + val);
+                }
             }
 
             e.target.value = "";
-            renderTerminal(); // 画面更新
+            dev.currentInput = "";
+            renderTerminal();
         }
     });
 
-    // 演習開始時にコンフィグをセットする部分（startLab関数内）
-    function startLab(lab) {
-        // ...（前回の処理）...
-        lab.devices.forEach((dev, idx) => {
-            const name = dev.trim();
-            deviceState[name] = { 
-                history: `${name} Console Initialized.\n`, 
-                prompt: `${name}>`, 
-                currentInput: "",
-                configBody: lab.initialConfigs[name] || "!" // スプシからその機器の分を取得
-            };
-            // ...
-        });
+    // ユーティリティ
+    function exitLab() { if(confirm("メニューに戻りますか？")) { document.getElementById('selection-screen').style.display = 'flex'; document.getElementById('lab-screen').style.display = 'none'; } }
+    function switchLeftTab(idx) {
+        document.querySelectorAll('#left-panel .tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+        document.querySelectorAll('#left-panel .tab-content').forEach((c, i) => c.classList.toggle('active', i === idx));
     }
-    // 5. 左右リサイズ
     const resizer = document.getElementById('dragMe');
     const leftPanel = document.getElementById('left-panel');
     resizer.addEventListener('mousedown', (e) => {
@@ -257,11 +264,6 @@ if (low === "sh run" || low === "show running-config") {
     function resize(e) {
         const newWidth = (e.clientX / window.innerWidth) * 100;
         if (newWidth > 15 && newWidth < 70) leftPanel.style.width = newWidth + '%';
-    }
-
-    function switchLeftTab(idx) {
-        document.querySelectorAll('#left-panel .tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-        document.querySelectorAll('#left-panel .tab-content').forEach((c, i) => c.classList.toggle('active', i === idx));
     }
 </script>
 </body>
