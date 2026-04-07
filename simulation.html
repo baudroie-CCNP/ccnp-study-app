@@ -3,68 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCNP Simulation Lab - Master</title>
+    <title>CCNP Simulation Lab - Final Master</title>
     <style>
         :root {
             --bg-dark: #1e1e1e; --card-bg: #2d2d2d; --accent: #007aff;
             --text-color: #cccccc; --terminal-green: #00ff00; --pass: #28a745; --fail: #dc3545;
         }
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-dark); color: var(--text-color); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
-        /* 共通UI */
         .btn { border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: #fff; transition: 0.2s; }
-        .back-btn { background: #444; }
-        .judge-btn { background: var(--accent); }
-        .log-btn { background: #6c757d; }
+        .back-btn { background: #444; } .judge-btn { background: var(--accent); } .log-btn { background: #6c757d; }
         .btn:hover { opacity: 0.8; }
 
         /* 選択画面 */
-        #selection-screen { height: 100vh; overflow-y: auto; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
+        #selection-screen { height: 100vh; overflow-y: auto; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
         .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 30px; }
         .lab-card { background: var(--card-bg); border: 1px solid #444; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.3s; }
-        .lab-card:hover { border-color: var(--accent); transform: translateY(-3px); background: #353535; }
-        .lab-title { font-size: 1.1rem; font-weight: 600; color: #fff; }
+        .lab-card:hover { border-color: var(--accent); transform: translateY(-3px); }
 
         /* 演習画面 */
         #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
         .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
         .split-container { display: flex; flex: 1; overflow: hidden; }
         #left-panel { width: 35%; min-width: 250px; background: #252526; display: flex; flex-direction: column; border-right: 1px solid #111; }
-        #right-panel { flex: 1; min-width: 300px; background: #000; display: flex; flex-direction: column; }
-        .resizer { width: 6px; cursor: col-resize; background: #333; z-index: 10; }
-        .resizer:hover { background: var(--accent); }
-        
+        #right-panel { flex: 1; background: #000; display: flex; flex-direction: column; }
+        .resizer { width: 6px; cursor: col-resize; background: #333; }
         .tab-bar { display: flex; background: #2d2d2d; border-bottom: 1px solid #111; }
-        .tab { padding: 12px 20px; cursor: pointer; font-size: 0.8rem; border-right: 1px solid #111; white-space: nowrap; color: #888; }
+        .tab { padding: 12px 20px; cursor: pointer; font-size: 0.8rem; border-right: 1px solid #111; color: #888; }
         .tab.active { background: #3d3d3d; color: #fff; border-bottom: 2px solid var(--accent); }
         .tab-content { flex: 1; padding: 20px; overflow-y: auto; display: none; line-height: 1.6; }
         .tab-content.active { display: block; }
 
-        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; background: #000; font-family: 'Consolas', monospace; }
+        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', monospace; }
         .history { flex: 1; overflow-y: auto; margin-bottom: 10px; white-space: pre-wrap; color: #fff; font-size: 14px; }
         .input-line { display: flex; align-items: center; border-top: 1px solid #222; padding-top: 10px; }
         .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
         #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
 
+        /* 採点表示 */
         .result-group { margin-bottom: 20px; background: #333; border-radius: 8px; padding: 15px; }
-        .pass-text { color: var(--pass); }
-        .fail-text { color: var(--fail); }
-        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 100; }
+        .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
+        .check-item input { margin-right: 10px; }
+        .pass-text { color: var(--pass); font-weight: bold; margin-left: auto; }
+        .fail-text { color: var(--fail); font-weight: bold; margin-left: auto; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">Loading System...</div>
+<div id="loading-overlay">Loading CCNP Simulation Engine...</div>
 
 <div id="selection-screen">
-    <h1>Simulation Lab</h1>
+    <h1>Simulation Lab Selection</h1>
     <div class="lab-grid" id="lab-list"></div>
 </div>
 
 <div id="lab-screen">
     <div class="top-nav">
-        <div><button class="btn back-btn" onclick="exitLab()">← Menu</button> <span id="active-lab-title">Lab</span></div>
-        <div>
+        <div><button class="btn back-btn" onclick="exitLab()">← Menu</button> <span id="active-lab-title" style="margin-left:10px; font-weight:bold;">Lab</span></div>
+        <div style="display:flex; gap:10px;">
             <button class="btn log-btn" onclick="downloadLog()">ログ出力</button>
             <button class="btn judge-btn" onclick="confirmJudge()">採点</button>
         </div>
@@ -78,7 +74,7 @@
                 <div class="tab" onclick="switchLeftTab(3)">結果</div>
             </div>
             <div id="l-cnt-0" class="tab-content active"></div>
-            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%;"></div>
+            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%; border:1px solid #444;"></div>
             <div id="l-cnt-2" class="tab-content"></div>
             <div id="l-cnt-3" class="tab-content"><div id="judgement-display">採点ボタンを押してください。</div></div>
         </div>
@@ -97,90 +93,90 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxIKZ3_UWKJ3bcufQZuAyx3_jWSCnoo76KvmNIFD9S4n50DT2MYN_ble04efT5l1dbO/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxIKZ3_UWKJ3bcufQZuAyx3_jWSCnoo76KvmNIFD9S4n50DT2MYN_ble04efT5l1dbO/exec"; // ★書き換え
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
 
     window.onload = async () => {
         try {
-            const [res1, res2] = await Promise.all([
-                fetch(`${GAS_URL}?type=simList`),
-                fetch(`${GAS_URL}?type=cmdDict`)
-            ]);
-            labs = await res1.json();
-            commandDict = await res2.json();
+            const [r1, r2] = await Promise.all([ fetch(`${GAS_URL}?type=simList`), fetch(`${GAS_URL}?type=cmdDict`) ]);
+            labs = await r1.json(); commandDict = await r2.json();
             document.getElementById('loading-overlay').style.display = 'none';
             renderSelectionScreen();
         } catch (e) { document.getElementById('loading-overlay').innerText = "Fetch Error."; }
     };
 
     function renderSelectionScreen() {
-        const list = document.getElementById('lab-list');
-        list.innerHTML = '';
+        const list = document.getElementById('lab-list'); list.innerHTML = '';
         labs.forEach(lab => {
-            const card = document.createElement('div');
-            card.className = 'lab-card';
+            const card = document.createElement('div'); card.className = 'lab-card';
             card.onclick = () => startLab(lab);
-            card.innerHTML = `<span class="lab-num">Sim ${lab.id}</span><div class="lab-title">${lab.title}</div>`;
+            card.innerHTML = `<span style="color:var(--accent);font-size:0.8rem;">Sim ${lab.id}</span><div style="font-weight:bold;margin-top:5px;">${lab.title}</div>`;
             list.appendChild(card);
         });
     }
 
     function startLab(lab) {
         currentLab = lab;
-        currentLab.answerList = lab.answers ? lab.answers.split(',').map(s => s.trim()) : [];
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('lab-screen').style.display = 'flex';
         document.getElementById('active-lab-title').innerText = lab.title;
         document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${(lab.desc||"").replace(/\n/g,'<br>')}</p>`;
         document.getElementById('l-cnt-2').innerHTML = `<h3>Tasks</h3><p>${(lab.task||"").replace(/\n/g,'<br>')}</p>`;
         document.getElementById('sim-diagram').src = `simulation/sim${lab.id}.png`;
+        document.getElementById('judgement-display').innerText = "採点ボタンを押すと結果が表示されます。";
 
-        const tabsEl = document.getElementById('device-tabs');
-        tabsEl.innerHTML = ''; deviceState = {};
+        const tabsEl = document.getElementById('device-tabs'); tabsEl.innerHTML = '';
+        deviceState = {};
         lab.devices.forEach((dev, idx) => {
             const name = dev.trim();
             deviceState[name] = { history: `${name} Console ---\n`, prompt: `${name}>`, configBody: lab.initialConfigs[name]||"!", currentPath: [], currentInput: "" };
-            const t = document.createElement('div');
-            t.className = `tab ${idx===0?'active':''}`; t.innerText = name; t.onclick = () => switchDevice(name);
+            const t = document.createElement('div'); t.className = `tab ${idx===0?'active':''}`;
+            t.innerText = name; t.onclick = () => switchDevice(name);
             tabsEl.appendChild(t);
         });
         switchDevice(lab.devices[0].trim());
     }
 
     function handleCommand(input, dev) {
-        const low = input.toLowerCase();
-        for (let cmd of commandDict) {
-            const regexStr = cmd.pattern.replace(/\{[^}]+\}/g, "(\\S+)").replace(/\s+/g, "\\s+");
-            const regex = new RegExp(`^${regexStr}$`, "i");
-            const match = input.match(regex);
-            const isCorrectPrompt = (cmd.prompt.toLowerCase() === "any" || dev.prompt.includes(cmd.prompt));
+        const inputWords = input.trim().split(/\s+/);
+        if (inputWords[0] === "") return false;
 
-            if (match && isCorrectPrompt) {
-                if (cmd.type === "表示") {
-                    dev.history += (cmd.output || "") + "\n";
-                    return true;
-                }
-                if (cmd.type === "モード切替") {
+        for (let cmd of commandDict) {
+            const cmdWords = cmd.pattern.split(/\s+/);
+            const isCorrectPrompt = (cmd.prompt.toLowerCase() === "any" || dev.prompt.includes(cmd.prompt));
+            if (!isCorrectPrompt) continue;
+
+            let isMatch = true; let finalAction = cmd.pattern;
+            if (cmdWords.length !== inputWords.length && !cmd.pattern.includes("{")) continue;
+
+            for (let i = 0; i < cmdWords.length; i++) {
+                const cw = cmdWords[i].toLowerCase(); const iw = (inputWords[i] || "").toLowerCase();
+                if (cw.startsWith("{")) { finalAction = finalAction.replace(cmdWords[i], inputWords[i]); continue; }
+                // 2文字以上かつ前方一致判定
+                if (iw.length >= 2 && cw.startsWith(iw)) continue;
+                if (cw === iw) continue;
+                isMatch = false; break;
+            }
+
+            if (isMatch) {
+                if (input.length < 5 && input !== cmd.pattern && cmd.type !== "モード切替") continue; // 5文字ルール
+                if (cmd.type === "表示") { dev.history += (cmd.output || "") + "\n"; }
+                else if (cmd.type === "モード切替") {
                     dev.currentPath.push(input);
-                    let suffix = "config";
-                    if (low.startsWith("int")) suffix = "config-if";
-                    else if (low.startsWith("router")) suffix = "config-router";
-                    else if (low.startsWith("policy-map")) suffix = "config-pmap";
-                    else if (low.startsWith("class")) suffix = "config-pmap-c";
-                    dev.prompt = `${activeId}(${suffix})#`;
-                    return true;
+                    let sfx = "config"; const low0 = inputWords[0].toLowerCase();
+                    if (low0.startsWith("int")) sfx = "config-if";
+                    else if (low0.startsWith("rou")) sfx = "config-router";
+                    else if (low0.startsWith("pol")) sfx = "config-pmap";
+                    else if (low0.startsWith("cla")) sfx = "config-pmap-c";
+                    else if (low0.startsWith("vla")) sfx = "config-vlan";
+                    dev.prompt = `${activeId}(${sfx})#`;
                 }
-                if (cmd.type === "設定") {
-                    const keyword = cmd.pattern.split(" ")[0];
+                else if (cmd.type === "設定") {
                     const indent = " ".repeat(dev.currentPath.length + 1);
-                    if (low.startsWith("no ")) {
-                        const target = cmd.pattern.split(" ")[1];
-                        updateConfig(dev, dev.currentPath, target, "");
-                    } else {
-                        updateConfig(dev, dev.currentPath, keyword, indent + input);
-                    }
-                    return true;
+                    if (inputWords[0].toLowerCase() === "no") updateConfig(dev, dev.currentPath, cmdWords[1], "");
+                    else updateConfig(dev, dev.currentPath, cmdWords[0], indent + input);
                 }
+                return true;
             }
         }
         return false;
@@ -188,20 +184,19 @@
 
     function updateConfig(dev, path, keyword, newLine) {
         if (!dev.configBody) dev.configBody = "!";
-        const parentHeader = path.length > 0 ? path[path.length - 1] : "";
-        if (!parentHeader) {
-            // Global config update
-            const lineRegex = new RegExp(`^${keyword}.*`, "m");
-            if (lineRegex.test(dev.configBody)) dev.configBody = (newLine==="") ? dev.configBody.replace(lineRegex, "").trim() : dev.configBody.replace(lineRegex, newLine);
+        const parent = path.length > 0 ? path[path.length - 1] : "";
+        if (!parent) {
+            const reg = new RegExp(`^${keyword}.*`, "m");
+            if (reg.test(dev.configBody)) dev.configBody = (newLine==="") ? dev.configBody.replace(reg, "").trim() : dev.configBody.replace(reg, newLine);
             else dev.configBody += "\n" + newLine;
             return;
         }
-        const sectionRegex = new RegExp(`(${parentHeader}[\\s\\S]*?)(^!|(?=^\\w))`, "m");
-        if (sectionRegex.test(dev.configBody)) {
-            dev.configBody = dev.configBody.replace(sectionRegex, (match, content, footer) => {
-                const lineRegex = new RegExp(`^\\s*${keyword}.*`, "m");
-                if (lineRegex.test(content)) return (newLine==="") ? content.replace(lineRegex, "").trimEnd() + "\n" + footer : content.replace(lineRegex, newLine) + footer;
-                else return content.trimEnd() + "\n" + newLine + "\n" + footer;
+        const sReg = new RegExp(`(${parent}[\\s\\S]*?)(^!|(?=^\\w))`, "m");
+        if (sReg.test(dev.configBody)) {
+            dev.configBody = dev.configBody.replace(sReg, (m, c, f) => {
+                const lReg = new RegExp(`^\\s*${keyword}.*`, "m");
+                if (lReg.test(c)) return (newLine==="") ? c.replace(lReg, "").trimEnd() + "\n" + f : c.replace(lReg, newLine) + f;
+                else return c.trimEnd() + "\n" + newLine + "\n" + f;
             });
         } else {
             dev.configBody = dev.configBody.trimEnd() + "\n" + path.join("\n ") + "\n " + newLine + "\n!\n";
@@ -213,16 +208,13 @@
             const val = e.target.value.trim(), low = val.toLowerCase(), dev = deviceState[activeId];
             if (val === "") { dev.history += dev.prompt + "\n"; } else {
                 dev.history += dev.prompt + " " + val + "\n";
-                if (low === "sh run" || low === "show running-config") {
-                    dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
-                } else if (low === "en" || low === "enable") { dev.prompt = activeId + "#"; }
-                else if (low === "conf t") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
+                if (low === "sh run" || low === "show running-config") dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
+                else if (low === "en" || low === "enable") dev.prompt = activeId + "#";
+                else if (low === "conf t" || low === "configure terminal") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
                 else if (low === "exit") {
                     if (dev.currentPath.length > 0) { dev.currentPath.pop(); dev.prompt = activeId + (dev.currentPath.length > 0 ? "(config-pmap)#" : "(config)#"); }
                     else dev.prompt = dev.prompt.includes("(config)") ? activeId + "#" : activeId + ">";
-                } else {
-                    if (!handleCommand(val, dev)) dev.history += "% Unknown command.\n";
-                }
+                } else { if (!handleCommand(val, dev)) dev.history += "% Unknown command.\n"; }
             }
             e.target.value = ""; renderTerminal();
         }
@@ -242,33 +234,45 @@
         document.querySelectorAll('#left-panel .tab-content').forEach((c, i) => c.classList.toggle('active', i === idx));
     }
     function confirmJudge() { if(confirm("採点を実施しますか？")) { switchLeftTab(3); runJudge(); } }
+    
     function runJudge() {
+        const judgeList = currentLab.answers.split(',').map(s => s.trim());
+        const displayList = currentLab.displayAnswers ? currentLab.displayAnswers.split(',').map(s => s.trim()) : judgeList;
         const groups = {}; let score = 0;
-        currentLab.answerList.forEach(ans => {
-            const [dev, cmd] = ans.split(':'); if(!groups[dev]) groups[dev] = [];
-            const ok = deviceState[dev]?.history.toLowerCase().includes(cmd.toLowerCase());
-            if(ok) score++; groups[dev].push({ cmd, ok });
+        
+        judgeList.forEach((jItem, idx) => {
+            const [dev, jCmd] = jItem.split(':');
+            const [__, dCmd] = displayList[idx].split(':');
+            if(!groups[dev]) groups[dev] = [];
+            const ok = deviceState[dev]?.history.toLowerCase().includes(jCmd.toLowerCase());
+            if(ok) score++; groups[dev].push({ cmd: dCmd || jCmd, ok });
         });
-        let html = `<h3>結果: ${score}/${currentLab.answerList.length}</h3>`;
+
+        let html = `<h3>進捗: ${score}/${judgeList.length}</h3>`;
         for (let dev in groups) {
             html += `<div class="result-group"><h4>${dev}</h4>`;
-            groups[dev].forEach(i => html += `<p>${i.ok?'○':'×'} ${i.cmd}</p>`);
+            groups[dev].forEach(i => {
+                html += `<div class="check-item"><input type="checkbox" ${i.ok?'checked':''} disabled> <span>${i.cmd}</span><span class="${i.ok?'pass-text':'fail-text'}">${i.ok?'○':'×'}</span></div>`;
+            });
             html += `</div>`;
         }
+        if(currentLab.comment) html += `<div style="padding:10px;background:#111;border-radius:5px;font-size:0.9rem;"><b>Tips:</b><br>${currentLab.comment.replace(/\n/g,'<br>')}</div>`;
         document.getElementById('judgement-display').innerHTML = html;
     }
+
     function downloadLog() {
-        if(!confirm("ログを出力しますか？")) return;
-        let log = `Log: ${currentLab.title}\n`;
+        if(!confirm("操作ログを出力しますか？")) return;
+        let log = `CCNP Lab Log - ${currentLab.title}\n${new Date().toLocaleString()}\n`;
         for(let d in deviceState) log += `\n[${d}]\n${deviceState[d].history}`;
-        const blob = new Blob([log], {type:'text/plain'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Log_${currentLab.id}.txt`; a.click();
+        const b = new Blob([log], {type:'text/plain'}); const u = URL.createObjectURL(b);
+        const a = document.createElement('a'); a.href = u; a.download = `Log_${currentLab.id}.txt`; a.click();
     }
-    function exitLab() { if(confirm("終了しますか？")) { document.getElementById('selection-screen').style.display='flex'; document.getElementById('lab-screen').style.display='none'; } }
+    function exitLab() { if(confirm("メニューに戻りますか？")) { document.getElementById('selection-screen').style.display='flex'; document.getElementById('lab-screen').style.display='none'; } }
+    
     const resizer = document.getElementById('dragMe');
     resizer.onmousedown = (e) => {
-        const move = (ev) => { let w = (ev.clientX/window.innerWidth)*100; if(w>15 && w<70) document.getElementById('left-panel').style.width = w+'%'; };
-        document.onmousemove = move; document.onmouseup = () => document.onmousemove = null;
+        document.onmousemove = (ev) => { let w = (ev.clientX/window.innerWidth)*100; if(w>15 && w<70) document.getElementById('left-panel').style.width = w+'%'; };
+        document.onmouseup = () => document.onmousemove = null;
     };
 </script>
 </body>
