@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCNP Simulation Lab - Standard Edition</title>
+    <title>CCNP Simulation Lab - Professional Edition</title>
     <style>
         :root {
             --bg-dark: #1e1e1e; --card-bg: #2d2d2d; --accent: #007aff;
@@ -12,6 +12,7 @@
         body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-dark); color: var(--text-color); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         .btn { border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: #fff; transition: 0.2s; }
         .back-btn { background: #444; } .judge-btn { background: var(--accent); } .log-btn { background: #6c757d; }
+        .nav-btn { background: #333; border: 1px solid #555; }
         .btn:hover { opacity: 0.8; }
 
         #selection-screen { height: 100vh; overflow-y: auto; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
@@ -42,8 +43,8 @@
         .device-header { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; }
         .cmd-row { display: flex; align-items: center; padding-left: 10px; margin-bottom: 6px; font-size: 0.9rem; border-bottom: 1px dashed #333; padding-bottom: 4px; }
         .cmd-text { flex: 1; color: #bbb; }
-        .pass-text { color: var(--pass); font-weight: bold; font-size: 1.1rem; }
-        .fail-text { color: var(--fail); font-weight: bold; font-size: 1.1rem; }
+        .pass-text { color: var(--pass); font-weight: bold; }
+        .fail-text { color: var(--fail); font-weight: bold; }
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; }
     </style>
 </head>
@@ -58,7 +59,12 @@
 
 <div id="lab-screen">
     <div class="top-nav">
-        <div><button class="btn back-btn" onclick="exitLab()">← Menu</button> <span id="active-lab-title" style="margin-left:10px; font-weight:bold;">Lab</span></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="btn back-btn" onclick="exitLab()">← Menu</button>
+            <button class="btn nav-btn" onclick="navLab(-1)">前の問題</button>
+            <button class="btn nav-btn" onclick="navLab(1)">次の問題</button>
+            <span id="active-lab-title" style="margin-left:10px; font-weight:bold;">Lab</span>
+        </div>
         <div style="display:flex; gap:10px;">
             <button class="btn log-btn" onclick="downloadLog()">ログ出力</button>
             <button class="btn judge-btn" onclick="confirmJudge()">採点</button>
@@ -97,6 +103,7 @@
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
 
     window.onload = async () => {
+        history.replaceState({page: "menu"}, "");
         try {
             const [r1, r2] = await Promise.all([ 
                 fetch(GAS_URL + "?type=simList"), 
@@ -108,7 +115,16 @@
             renderSelectionScreen();
         } catch (e) { 
             document.getElementById('loading-overlay').innerText = "Fetch Error. GAS URLを確認してください。"; 
-            console.error(e);
+        }
+    };
+
+    window.onpopstate = (event) => {
+        if (document.getElementById('lab-screen').style.display === 'flex') {
+            if (confirm("Menuに戻りますか？現在の作業内容は消去されます。")) {
+                exitLab();
+            } else {
+                history.pushState({page: "lab"}, "");
+            }
         }
     };
 
@@ -124,6 +140,7 @@
 
     function startLab(lab) {
         currentLab = lab;
+        history.pushState({page: "lab"}, "");
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('lab-screen').style.display = 'flex';
         document.getElementById('active-lab-title').innerText = lab.title;
@@ -136,20 +153,43 @@
         deviceState = {};
         lab.devices.forEach((dev, idx) => {
             const name = dev.trim();
-            deviceState[name] = { 
-                history: `${name} Console ---\n`, 
-                prompt: `${name}>`, 
-                configBody: lab.initialConfigs[name]||"!", 
-                currentPath: [], 
-                currentInput: "" 
-            };
+            deviceState[name] = { history: `${name} Console ---\n`, prompt: `${name}>`, configBody: lab.initialConfigs[name]||"!", currentPath: [], currentInput: "" };
             const t = document.createElement('div');
             t.className = "tab " + (idx === 0 ? "active" : "");
-            t.innerText = name; 
-            t.onclick = () => switchDevice(name);
+            t.innerText = name; t.onclick = () => switchDevice(name);
             tabsEl.appendChild(t);
         });
         switchDevice(lab.devices[0].trim());
+    }
+
+    function navLab(direction) {
+        const currentIndex = labs.findIndex(l => l.id === currentLab.id);
+        const nextIndex = currentIndex + direction;
+        if (nextIndex >= 0 && nextIndex < labs.length) {
+            if (confirm("別の問題に移動しますか？現在の履歴は失われます。")) startLab(labs[nextIndex]);
+        } else alert("これ以上問題はありません。");
+    }
+
+    // Ping成功判定：設定が完了しているか + 正解リストにそのIPへのPingが含まれているか
+    function checkPingStatus(pingInput) {
+        if (!currentLab || !currentLab.answers) return false;
+        
+        // 1. 設定項目（Ping以外）の充足チェック
+        const allAnswers = currentLab.answers.split(',').map(s => s.trim());
+        const configCriteria = allAnswers.filter(item => !item.split(':')[1].toLowerCase().startsWith("ping"));
+        
+        let configScore = 0;
+        configCriteria.forEach(jItem => {
+            const [dev, jCmd] = jItem.split(':');
+            if (deviceState[dev]?.history.toLowerCase().includes(jCmd.toLowerCase())) configScore++;
+        });
+        const isConfigComplete = configScore === configCriteria.length;
+
+        // 2. 宛先IPの有効性チェック (スプシの正解リストにそのPingコマンドがあるか)
+        // ユーザー入力を正規化して比較（例: "ping 1.1.1.1" が正解に含まれるか）
+        const isTargetCorrect = allAnswers.some(ans => ans.toLowerCase().includes(pingInput.toLowerCase()));
+
+        return isConfigComplete && isTargetCorrect;
     }
 
     function handleCommand(input, dev) {
@@ -157,9 +197,29 @@
         const lowInput = input.toLowerCase();
         if (inputWords[0] === "") return false;
 
-        // 特殊：show run (スプシに頼らず現在の中身を出す)
+        // 特殊：show run
         if (lowInput === "sh run" || lowInput === "show run" || lowInput === "show running-config") {
             dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
+            return true;
+        }
+
+        // 特殊：ping
+        if (lowInput.startsWith("ping")) {
+            const targetIp = inputWords[1] || "unknown";
+            dev.history += `Type escape sequence to abort.\nSending 5, 100-byte ICMP Echos to ${targetIp}, timeout is 2 seconds:\n`;
+            setTimeout(() => {
+                const success = checkPingStatus(lowInput);
+                dev.history += success ? "!!!!!" : ".....";
+                dev.history += `\nSuccess rate is ${success ? "100" : "0"} percent.\n${dev.prompt}`;
+                renderTerminal();
+            }, 600);
+            return true;
+        }
+
+        // 特殊：end
+        if (lowInput === "end") {
+            dev.currentPath = [];
+            dev.prompt = activeId + "#";
             return true;
         }
 
@@ -181,10 +241,8 @@
 
             if (isMatch) {
                 if (input.length < 5 && input !== cmd.pattern && cmd.type !== "モード切替") continue;
-                
-                if (cmd.type === "表示") { 
-                    dev.history += (cmd.output || "") + "\n"; 
-                } else if (cmd.type === "モード切替") {
+                if (cmd.type === "表示") dev.history += (cmd.output || "") + "\n";
+                else if (cmd.type === "モード切替") {
                     dev.currentPath.push(input);
                     let sfx = "config"; const low0 = inputWords[0].toLowerCase();
                     if (low0.startsWith("int")) sfx = "config-if";
@@ -242,27 +300,28 @@
             deviceData[dev].push({ text: dCmd || jCmd, ok: ok });
         });
 
-        let html = '<div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">' +
-                   '<div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>' +
-                   '<div style="font-size: 1.8rem; font-weight: bold;">' + score + ' / ' + totalCriteria + '</div></div><h3>採点詳細</h3>';
+        let html = `<div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
+                   <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
+                   <div style="font-size: 1.8rem; font-weight: bold;">${score} / ${totalCriteria}</div></div><h3>採点詳細</h3>`;
 
         for (let dev in deviceData) {
-            html += '<div class="device-block"><div class="device-header">■ ' + dev + '</div>';
+            html += `<div class="device-block"><div class="device-header">■ ${dev}</div>`;
             deviceData[dev].forEach(cmd => {
-                html += '<div class="cmd-row"><span class="cmd-text">' + cmd.text + '</span>' +
-                        '<span class="' + (cmd.ok ? 'pass-text' : 'fail-text') + '" style="width:30px; text-align:right;">' + (cmd.ok ? '○' : '×') + '</span></div>';
+                html += `<div class="cmd-row"><span class="cmd-text">${cmd.text}</span>
+                        <span class="${cmd.ok ? 'pass-text' : 'fail-text'}" style="width:30px; text-align:right;">${cmd.ok ? '○' : '×'}</span></div>`;
             });
             html += '</div>';
         }
-        if (currentLab.comment) html += '<div style="margin-top:20px; padding:15px; background: rgba(255,255,255,0.05); border-left:4px solid var(--accent); font-size: 0.9rem;">' +
-                                      '<b style="color:var(--accent);">Tips:</b><br>' + currentLab.comment.replace(/\n/g, '<br>') + '</div>';
+        if (currentLab.comment) html += `<div style="margin-top:20px; padding:15px; background: rgba(255,255,255,0.05); border-left:4px solid var(--accent); font-size: 0.9rem;">
+                                      <b style="color:var(--accent);">Tips:</b><br>${currentLab.comment.replace(/\n/g, '<br>')}</div>`;
         document.getElementById('judgement-display').innerHTML = html;
     }
 
     document.getElementById('cmd-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') {
             const val = e.target.value.trim(), low = val.toLowerCase(), dev = deviceState[activeId];
-            if (val === "") { dev.history += dev.prompt + "\n"; } else {
+            if (val === "") dev.history += dev.prompt + "\n";
+            else {
                 dev.history += dev.prompt + " " + val + "\n";
                 if (low === "en" || low === "enable") dev.prompt = activeId + "#";
                 else if (low === "conf t" || low === "configure terminal") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
@@ -275,17 +334,12 @@
         }
     });
 
-    // 修正：右側のデバイス切り替え時にタブのactiveクラスを更新する
     function switchDevice(id) { 
         if(activeId) deviceState[activeId].currentInput = document.getElementById('cmd-input').value; 
         activeId = id; 
-        
-        // 全デバイス用タブからactiveを削除し、選択されたものに付与
         document.querySelectorAll('#device-tabs .tab').forEach(t => {
-            if (t.innerText === id) t.classList.add('active');
-            else t.classList.remove('active');
+            t.classList.toggle('active', t.innerText === id);
         });
-        
         renderTerminal(); 
     }
 
@@ -303,13 +357,17 @@
     }
     function confirmJudge() { if(confirm("採点を実施しますか？")) { switchLeftTab(3); runJudge(); } }
     function downloadLog() {
-        if(!confirm("これまでの操作ログをテキストファイルとして出力（ダウンロード）しますか？")) return;
-        let log = "CCNP Lab Log - " + currentLab.title + "\n" + new Date().toLocaleString() + "\n";
-        for(let d in deviceState) log += "\n[" + d + "]\n" + deviceState[d].history;
+        if(!confirm("ログを出力しますか？")) return;
+        let log = `CCNP Lab Log - ${currentLab.title}\n${new Date().toLocaleString()}\n`;
+        for(let d in deviceState) log += `\n[${d}]\n${deviceState[d].history}`;
         const b = new Blob([log], {type:'text/plain'}); const u = URL.createObjectURL(b);
-        const a = document.createElement('a'); a.href = u; a.download = "Log_" + currentLab.id + ".txt"; a.click();
+        const a = document.createElement('a'); a.href = u; a.download = `Log_${currentLab.id}.txt`; a.click();
     }
-    function exitLab() { if(confirm("終了しますか？")) { document.getElementById('selection-screen').style.display='flex'; document.getElementById('lab-screen').style.display='none'; } }
+    function exitLab() { 
+        document.getElementById('selection-screen').style.display='flex'; 
+        document.getElementById('lab-screen').style.display='none'; 
+        history.pushState({page: "menu"}, "");
+    }
     const resizer = document.getElementById('dragMe');
     resizer.onmousedown = (e) => {
         document.onmousemove = (ev) => { let w = (ev.clientX/window.innerWidth)*100; if(w>15 && w<70) document.getElementById('left-panel').style.width = w+'%'; };
