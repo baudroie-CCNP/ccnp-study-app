@@ -35,18 +35,18 @@
         .tab-content { flex: 1; padding: 20px; overflow-y: auto; display: none; line-height: 1.6; }
         .tab-content.active { display: block; }
 
-        /* ターミナルエリア：ここが入力バー固定のキモ */
+        /* ターミナルエリア */
         .terminal-wrapper { 
             flex: 1; 
             display: flex; 
             flex-direction: column; 
             padding: 15px; 
             font-family: 'Consolas', monospace; 
-            overflow: hidden; /* 親はスクロールさせない */
+            overflow: hidden; 
         }
         .history { 
             flex: 1; 
-            overflow-y: auto; /* 出力履歴だけをスクロールさせる */
+            overflow-y: auto; 
             margin-bottom: 0; 
             white-space: pre-wrap; 
             color: #fff; 
@@ -58,7 +58,7 @@
             align-items: center; 
             border-top: 1px solid #333; 
             padding-top: 10px; 
-            flex-shrink: 0; /* 入力欄が潰れないように固定 */
+            flex-shrink: 0; 
             background: #000;
         }
         .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
@@ -124,7 +124,7 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwfZXjEZDwdKlOgI89ygiCbxb0sOMEVXhzUDcZ608H8Q4zcQuPGi_mS6p2sbv941UFP/exec"; // ★書き換え必須
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzO0l-s4Ph-Xq8CWki1fhIrCQPCWCWUCGRmdbwCG0gDsZe9NxvpRQEJW_dzjHT4zhdU/exec"; // ★必ず最新のデプロイURLに書き換えてください
 
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
 
@@ -144,7 +144,6 @@
         }
     };
 
-    // ブラウザの戻るボタン対策
     window.onpopstate = (event) => {
         if (document.getElementById('lab-screen').style.display === 'flex') {
             if (confirm("Menuに戻りますか？現在の作業内容は消去されます。")) {
@@ -183,7 +182,7 @@
             deviceState[name] = { 
                 history: `${name} Console ---\n`, 
                 prompt: `${name}>`, 
-                configBody: lab.initialConfigs[name]||"!", 
+                configBody: lab.initialConfigs[name] || "!", 
                 currentPath: [], 
                 currentInput: "" 
             };
@@ -304,38 +303,68 @@
         }
     }
 
+    // 【修正箇所】採点ロジック：H列の階層オブジェクトに対応
     function runJudge() {
         if (!currentLab || !currentLab.answers) return;
+        
+        // G列：判定条件 (dev:cmd, dev:cmd)
         const judgeList = currentLab.answers.split(',').map(s => s.trim());
-        const displayList = currentLab.displayAnswers ? currentLab.displayAnswers.split(',').map(s => s.trim()) : judgeList;
-        let score = 0, totalCriteria = 0, deviceData = {}; 
+        // H列：表示用オブジェクト ( {R1: [cmd, cmd], SW1: [cmd]} )
+        const displayAnswers = currentLab.displayAnswers; 
+        
+        let score = 0, totalCriteria = 0;
+        const deviceData = {}; 
 
-        judgeList.forEach((jItem, idx) => {
-            const dItem = displayList[idx];
+        // 1. まず全判定項目（G列）をチェックしてスコアを計算
+        judgeList.forEach(jItem => {
             if (jItem.startsWith("[")) return; 
-            const [dev, jCmd] = jItem.split(':');
-            const [__, dCmd] = dItem.split(':');
+            const parts = jItem.split(':');
+            if (parts.length < 2) return;
+            const dev = parts[0].trim();
+            const jCmd = parts[1].trim();
             totalCriteria++;
-            const ok = deviceState[dev]?.history.toLowerCase().includes(jCmd.toLowerCase());
-            if (ok) score++;
-            if (!deviceData[dev]) deviceData[dev] = [];
-            deviceData[dev].push({ text: dCmd || jCmd, ok: ok });
+            if (deviceState[dev]?.history.toLowerCase().includes(jCmd.toLowerCase())) {
+                score++;
+            }
         });
 
-        let html = `<div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
-                   <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
-                   <div style="font-size: 1.8rem; font-weight: bold;">${score} / ${totalCriteria}</div></div><h3>採点詳細</h3>`;
+        // 2. 表示用（H列）のデータをベースにUIを作成
+        let html = `
+            <div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
+                <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
+                <div style="font-size: 1.8rem; font-weight: bold;">${score} / ${totalCriteria}</div>
+            </div>
+            <h3>採点詳細 (正解コンフィグ)</h3>`;
 
-        for (let dev in deviceData) {
-            html += `<div class="device-block"><div class="device-header">■ ${dev}</div>`;
-            deviceData[dev].forEach(cmd => {
-                html += `<div class="cmd-row"><span class="cmd-text">${cmd.text}</span>
-                        <span class="${cmd.ok ? 'pass-text' : 'fail-text'}" style="width:30px; text-align:right;">${cmd.ok ? '○' : '×'}</span></div>`;
-            });
-            html += '</div>';
+        if (displayAnswers && typeof displayAnswers === 'object' && Object.keys(displayAnswers).length > 0) {
+            for (const dev in displayAnswers) {
+                html += `
+                <div class="device-block">
+                    <div class="device-header">■ ${dev}</div>`;
+                
+                displayAnswers[dev].forEach(dCmd => {
+                    // G列にこのコマンドに関連する判定があるか簡易チェック（パス/フェイル表示のため）
+                    // ※厳密な紐付けが難しいため、現状は履歴に存在するかで○×判定
+                    const isOk = deviceState[dev]?.history.toLowerCase().includes(dCmd.toLowerCase());
+                    html += `
+                    <div class="cmd-row">
+                        <span class="cmd-text">└ ${dCmd}</span>
+                        <span class="${isOk ? 'pass-text' : 'fail-text'}" style="width:30px; text-align:right;">
+                            ${isOk ? '○' : '×'}
+                        </span>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+        } else {
+            html += "<p>表示用の正解データがありません。</p>";
         }
-        if (currentLab.comment) html += `<div style="margin-top:20px; padding:15px; background: rgba(255,255,255,0.05); border-left:4px solid var(--accent); font-size: 0.9rem;">
-                                      <b style="color:var(--accent);">Tips:</b><br>${currentLab.comment.replace(/\n/g, '<br>')}</div>`;
+
+        if (currentLab.comment) {
+            html += `<div style="margin-top:20px; padding:15px; background: rgba(255,255,255,0.05); border-left:4px solid var(--accent); font-size: 0.9rem;">
+                        <b style="color:var(--accent);">Tips:</b><br>${currentLab.comment.replace(/\n/g, '<br>')}
+                    </div>`;
+        }
         document.getElementById('judgement-display').innerHTML = html;
     }
 
@@ -372,7 +401,6 @@
         document.getElementById('current-prompt').innerText = dev.prompt;
         document.getElementById('cmd-input').value = dev.currentInput || "";
         
-        // 出力更新時に最下部へスクロール
         setTimeout(() => {
             historyEl.scrollTop = historyEl.scrollHeight;
         }, 0);
