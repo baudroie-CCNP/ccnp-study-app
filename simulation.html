@@ -21,6 +21,13 @@
         .lab-card { background: var(--card-bg); border: 1px solid #444; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.3s; }
         .lab-card:hover { border-color: var(--accent); transform: translateY(-3px); }
 
+        /* お問い合わせ窓口セクション */
+        .contact-section { margin-top: 60px; padding: 30px; border-top: 1px solid #444; text-align: center; width: 100%; max-width: 800px; }
+        .contact-btn-group { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-contact { display: inline-block; padding: 12px 24px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-size: 0.9rem; border: 1px solid #555; transition: 0.3s; }
+        .btn-contact:hover { background-color: var(--accent); border-color: var(--accent); }
+        .copyright { font-size: 0.8rem; color: #666; }
+
         /* 演習画面 */
         #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
         .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
@@ -36,31 +43,9 @@
         .tab-content.active { display: block; }
 
         /* ターミナルエリア */
-        .terminal-wrapper { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            padding: 15px; 
-            font-family: 'Consolas', monospace; 
-            overflow: hidden; 
-        }
-        .history { 
-            flex: 1; 
-            overflow-y: auto; 
-            margin-bottom: 0; 
-            white-space: pre-wrap; 
-            color: #fff; 
-            font-size: 14px; 
-            padding-bottom: 10px;
-        }
-        .input-line { 
-            display: flex; 
-            align-items: center; 
-            border-top: 1px solid #333; 
-            padding-top: 10px; 
-            flex-shrink: 0; 
-            background: #000;
-        }
+        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', monospace; overflow: hidden; }
+        .history { flex: 1; overflow-y: auto; margin-bottom: 0; white-space: pre-wrap; color: #fff; font-size: 14px; padding-bottom: 10px; }
+        .input-line { display: flex; align-items: center; border-top: 1px solid #333; padding-top: 10px; flex-shrink: 0; background: #000; }
         .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
         #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
 
@@ -81,6 +66,16 @@
 <div id="selection-screen">
     <h1>Simulation Lab Selection</h1>
     <div class="lab-grid" id="lab-list"></div>
+
+    <div class="contact-section">
+        <h2>お問い合わせ窓口</h2>
+        <div class="contact-btn-group">
+            <a href="https://docs.google.com/forms/d/フォームのID/viewform" target="_blank" rel="noopener noreferrer" class="btn-contact">不具合報告 / 機能改善リクエスト</a>
+            <a href="https://docs.google.com/document/d/ドキュメントのID/edit" target="_blank" rel="noopener noreferrer" class="btn-contact">本番試験前の注意事項</a>              
+            <a href="https://docs.google.com/forms/d/フォームのID/viewform" target="_blank" rel="noopener noreferrer" class="btn-contact">試験後フィードバック</a>
+        </div>
+        <div class="copyright">&copy; 2026 CCNP 虎の巻 Project</div>
+    </div>
 </div>
 
 <div id="lab-screen">
@@ -184,7 +179,9 @@
                 prompt: `${name}>`, 
                 configBody: lab.initialConfigs[name] || "!", 
                 currentPath: [], 
-                currentInput: "" 
+                currentInput: "",
+                cmdHistory: [],
+                historyIndex: -1
             };
             const t = document.createElement('div');
             t.className = "tab " + (idx === 0 ? "active" : "");
@@ -216,11 +213,13 @@
         return isConfigComplete && isTargetCorrect;
     }
 
+    // ★修正箇所：曖昧（Ambiguous）コマンドの判定ロジック実装
     function handleCommand(input, dev) {
         const inputWords = input.trim().split(/\s+/);
         const lowInput = input.toLowerCase();
         if (inputWords[0] === "") return false;
 
+        // 基本コマンド
         if (lowInput === "sh run" || lowInput === "show run" || lowInput === "show running-config") {
             dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
             return true;
@@ -244,42 +243,74 @@
             return true;
         }
 
+        let possibleMatches = [];
+        let exactMatch = null;
+
         for (let cmd of commandDict) {
             const cmdWords = cmd.pattern.split(/\s+/);
             const isCorrectPrompt = (cmd.prompt.toLowerCase() === "any" || dev.prompt.includes(cmd.prompt));
             if (!isCorrectPrompt) continue;
 
             let isMatch = true;
+            let isExact = true;
+
+            // 長さのチェック（変数が含まれるコマンドは除外）
             if (cmdWords.length !== inputWords.length && !cmd.pattern.includes("{")) continue;
 
             for (let i = 0; i < cmdWords.length; i++) {
-                const cw = cmdWords[i].toLowerCase(); const iw = (inputWords[i] || "").toLowerCase();
-                if (cw.startsWith("{")) continue; 
-                if (iw.length >= 2 && cw.startsWith(iw)) continue; 
-                if (cw === iw) continue;
+                const cw = cmdWords[i].toLowerCase(); 
+                const iw = (inputWords[i] || "").toLowerCase();
+
+                if (cw.startsWith("{")) continue; // 変数（{ip}など）はチェックをスキップ
+
+                if (iw.length >= 1 && cw.startsWith(iw)) {
+                    if (cw !== iw) isExact = false;
+                    continue;
+                }
                 isMatch = false; break;
             }
 
             if (isMatch) {
-                if (input.length < 5 && input !== cmd.pattern && cmd.type !== "モード切替") continue;
-                if (cmd.type === "表示") dev.history += (cmd.output || "") + "\n";
-                else if (cmd.type === "モード切替") {
-                    dev.currentPath.push(input);
-                    let sfx = "config"; const low0 = inputWords[0].toLowerCase();
-                    if (low0.startsWith("int")) sfx = "config-if";
-                    else if (low0.startsWith("rou")) sfx = "config-router";
-                    else if (low0.startsWith("pol")) sfx = "config-pmap";
-                    else if (low0.startsWith("cla")) sfx = "config-pmap-c";
-                    else if (low0.startsWith("vla")) sfx = "config-vlan";
-                    dev.prompt = activeId + "(" + sfx + ")#";
-                } else if (cmd.type === "設定") {
-                    const indent = " ".repeat(dev.currentPath.length + 1);
-                    if (inputWords[0].toLowerCase() === "no") updateConfig(dev, dev.currentPath, cmdWords[1], "");
-                    else updateConfig(dev, dev.currentPath, cmdWords[0], indent + input);
-                }
-                return true;
+                possibleMatches.push(cmd);
+                if (isExact) exactMatch = cmd;
             }
         }
+
+        let targetCmd = null;
+
+        // 判定：完全一致があれば優先、複数あれば曖昧エラー
+        if (exactMatch) {
+            targetCmd = exactMatch;
+        } else if (possibleMatches.length === 1) {
+            targetCmd = possibleMatches[0];
+        } else if (possibleMatches.length > 1) {
+            // 曖昧な場合のエラー出力（実機同様）
+            dev.history += `% Ambiguous command:  "${input}"\n`;
+            return true; 
+        }
+
+        // コマンドの実行
+        if (targetCmd) {
+            const cmd = targetCmd;
+            const cmdWords = cmd.pattern.split(/\s+/);
+            if (cmd.type === "表示") dev.history += (cmd.output || "") + "\n";
+            else if (cmd.type === "モード切替") {
+                dev.currentPath.push(input);
+                let sfx = "config"; const low0 = inputWords[0].toLowerCase();
+                if (low0.startsWith("int")) sfx = "config-if";
+                else if (low0.startsWith("rou")) sfx = "config-router";
+                else if (low0.startsWith("pol")) sfx = "config-pmap";
+                else if (low0.startsWith("cla")) sfx = "config-pmap-c";
+                else if (low0.startsWith("vla")) sfx = "config-vlan";
+                dev.prompt = activeId + "(" + sfx + ")#";
+            } else if (cmd.type === "設定") {
+                const indent = " ".repeat(dev.currentPath.length + 1);
+                if (inputWords[0].toLowerCase() === "no") updateConfig(dev, dev.currentPath, cmdWords[1], "");
+                else updateConfig(dev, dev.currentPath, cmdWords[0], indent + input);
+            }
+            return true;
+        }
+
         return false;
     }
 
@@ -303,19 +334,15 @@
         }
     }
 
-    // 【修正箇所】採点ロジック：H列の階層オブジェクトに対応
     function runJudge() {
         if (!currentLab || !currentLab.answers) return;
         
-        // G列：判定条件 (dev:cmd, dev:cmd)
         const judgeList = currentLab.answers.split(',').map(s => s.trim());
-        // H列：表示用オブジェクト ( {R1: [cmd, cmd], SW1: [cmd]} )
         const displayAnswers = currentLab.displayAnswers; 
         
         let score = 0, totalCriteria = 0;
         const deviceData = {}; 
 
-        // 1. まず全判定項目（G列）をチェックしてスコアを計算
         judgeList.forEach(jItem => {
             if (jItem.startsWith("[")) return; 
             const parts = jItem.split(':');
@@ -328,7 +355,6 @@
             }
         });
 
-        // 2. 表示用（H列）のデータをベースにUIを作成
         let html = `
             <div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
                 <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
@@ -338,20 +364,13 @@
 
         if (displayAnswers && typeof displayAnswers === 'object' && Object.keys(displayAnswers).length > 0) {
             for (const dev in displayAnswers) {
-                html += `
-                <div class="device-block">
-                    <div class="device-header">■ ${dev}</div>`;
-                
+                html += `<div class="device-block"><div class="device-header">■ ${dev}</div>`;
                 displayAnswers[dev].forEach(dCmd => {
-                    // G列にこのコマンドに関連する判定があるか簡易チェック（パス/フェイル表示のため）
-                    // ※厳密な紐付けが難しいため、現状は履歴に存在するかで○×判定
                     const isOk = deviceState[dev]?.history.toLowerCase().includes(dCmd.toLowerCase());
                     html += `
                     <div class="cmd-row">
                         <span class="cmd-text">└ ${dCmd}</span>
-                        <span class="${isOk ? 'pass-text' : 'fail-text'}" style="width:30px; text-align:right;">
-                            ${isOk ? '○' : '×'}
-                        </span>
+                        <span class="${isOk ? 'pass-text' : 'fail-text'}" style="width:30px; text-align:right;">${isOk ? '○' : '×'}</span>
                     </div>`;
                 });
                 html += '</div>';
@@ -369,19 +388,71 @@
     }
 
     document.getElementById('cmd-input').addEventListener('keydown', e => {
+        const dev = deviceState[activeId];
+        const inputEl = e.target;
+        const val = inputEl.value;
+
         if (e.key === 'Enter') {
-            const val = e.target.value.trim(), low = val.toLowerCase(), dev = deviceState[activeId];
-            if (val === "") dev.history += dev.prompt + "\n";
-            else {
-                dev.history += dev.prompt + " " + val + "\n";
+            const trimmedVal = val.trim();
+            const low = trimmedVal.toLowerCase();
+
+            if (trimmedVal !== "") {
+                dev.cmdHistory.push(trimmedVal);
+            }
+            dev.historyIndex = dev.cmdHistory.length;
+
+            if (trimmedVal === "") {
+                dev.history += dev.prompt + "\n";
+            } else {
+                dev.history += dev.prompt + " " + trimmedVal + "\n";
                 if (low === "en" || low === "enable") dev.prompt = activeId + "#";
                 else if (low === "conf t" || low === "configure terminal") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
                 else if (low === "exit") {
                     if (dev.currentPath.length > 0) { dev.currentPath.pop(); dev.prompt = activeId + (dev.currentPath.length > 0 ? "(config-pmap)#" : "(config)#"); }
                     else dev.prompt = dev.prompt.includes("(config)") ? activeId + "#" : activeId + ">";
-                } else { if (!handleCommand(val, dev)) dev.history += "% Unknown command.\n"; }
+                } else { 
+                    if (!handleCommand(trimmedVal, dev)) dev.history += "% Unknown command or computer name, or unable to find computer address\n"; 
+                }
             }
-            e.target.value = ""; renderTerminal();
+            inputEl.value = ""; 
+            renderTerminal();
+            e.preventDefault();
+        }
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (dev.cmdHistory.length > 0 && dev.historyIndex > 0) {
+                dev.historyIndex--;
+                inputEl.value = dev.cmdHistory[dev.historyIndex];
+            }
+        }
+        else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (dev.historyIndex < dev.cmdHistory.length - 1) {
+                dev.historyIndex++;
+                inputEl.value = dev.cmdHistory[dev.historyIndex];
+            } else {
+                dev.historyIndex = dev.cmdHistory.length;
+                inputEl.value = ""; 
+            }
+        }
+        else if (e.key === 'Tab') {
+            e.preventDefault(); 
+            if (val.trim() === "") return;
+
+            const basics = ["enable", "configure terminal", "exit", "end", "show running-config", "ping", "no", "interface", "ip address"];
+            let matches = basics.filter(c => c.startsWith(val.toLowerCase()));
+
+            for (let cmd of commandDict) {
+                let cleanCmd = cmd.pattern.replace(/\{.*?\}/g, "").trim(); 
+                if (cleanCmd.toLowerCase().startsWith(val.toLowerCase()) && !matches.includes(cleanCmd)) {
+                    matches.push(cleanCmd);
+                }
+            }
+
+            // ★修正箇所：候補が1つの時だけ補完する（曖昧な場合は何もしない）
+            if (matches.length === 1) {
+                inputEl.value = matches[0] + " "; 
+            }
         }
     });
 
