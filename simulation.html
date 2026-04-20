@@ -15,7 +15,14 @@
         .nav-btn { background: #333; border: 1px solid #555; }
         .btn:hover { opacity: 0.8; }
 
-        #selection-screen { height: 100vh; overflow-y: auto; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
+        /* ログイン画面 */
+        #login-screen { display: flex; height: 100vh; flex-direction: column; justify-content: center; align-items: center; }
+        .login-box { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid #444; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .login-input { width: 100%; padding: 12px; margin-bottom: 15px; box-sizing: border-box; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff; font-size: 1rem; }
+        .login-input:focus { outline: none; border-color: var(--accent); }
+
+        /* 選択画面 (初期状態は非表示) */
+        #selection-screen { display: none; height: 100vh; overflow-y: auto; padding: 40px 20px; flex-direction: column; align-items: center; }
         .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 30px; }
         .lab-card { background: var(--card-bg); border: 1px solid #444; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.3s; }
         .lab-card:hover { border-color: var(--accent); transform: translateY(-3px); }
@@ -26,6 +33,7 @@
         .btn-contact:hover { background-color: var(--accent); border-color: var(--accent); }
         .copyright { font-size: 0.8rem; color: #666; }
 
+        /* 演習画面 */
         #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
         .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
         .split-container { display: flex; flex: 1; overflow: hidden; }
@@ -51,12 +59,24 @@
         .cmd-text { flex: 1; color: #bbb; }
         .pass-text { color: var(--pass); font-weight: bold; }
         .fail-text { color: var(--fail); font-weight: bold; }
-        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; flex-direction: column; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">Loading Simulation Engine...</div>
+<div id="loading-overlay">
+    <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;" id="loading-text">Loading System...</div>
+</div>
+
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="margin-top:0; color:var(--accent);">システムログイン</h2>
+        <input type="text" id="login-name" class="login-input" placeholder="ユーザーID">
+        <input type="password" id="login-pass" class="login-input" placeholder="パスワード" style="margin-bottom:20px;">
+        <button class="btn judge-btn" style="width:100%; padding:12px; font-size:1rem;" onclick="attemptLogin()">ログイン</button>
+        <div id="login-error" style="color:var(--fail); margin-top:15px; font-size:0.9rem;"></div>
+    </div>
+</div>
 
 <div id="selection-screen">
     <h1>Simulation Lab Selection</h1>
@@ -114,30 +134,80 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzO0l-s4Ph-Xq8CWki1fhIrCQPCWCWUCGRmdbwCG0gDsZe9NxvpRQEJW_dzjHT4zhdU/exec"; // ★必ず最新のデプロイURLに書き換えてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyPU0g3OuYVoEicnnTikmSYtTHC0Cgp4i_-mErWe7kEbyQbtDTvBki_1PNAhIChW2m2/exec"; // ★必ず最新のデプロイURLに書き換えてください
 
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
+    let currentUser = null; // ログインユーザー情報
 
-    window.onload = async () => {
-        history.replaceState({page: "menu"}, "");
+    window.onload = () => {
+        // 初期ロード時はログイン画面を表示
+        document.getElementById('loading-overlay').style.display = 'none';
+        history.replaceState({page: "login"}, "");
+        
+        // Enterキーでログインできるようにする
+        document.getElementById('login-pass').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') attemptLogin();
+        });
+    };
+
+    // ★ログイン処理
+    async function attemptLogin() {
+        const name = document.getElementById('login-name').value;
+        const pass = document.getElementById('login-pass').value;
+        
+        if (!name || !pass) {
+            document.getElementById('login-error').innerText = "ユーザーIDとパスワードを入力してください";
+            return;
+        }
+
+        document.getElementById('loading-text').innerText = "認証中...";
+        document.getElementById('loading-overlay').style.display = 'flex';
+
         try {
+            // 1. GASにログイン認証をリクエスト
+            const loginRes = await fetch(`${GAS_URL}?type=login&name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}`);
+            const loginData = await loginRes.json();
+
+            if (!loginData.success) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('login-error').innerText = loginData.error;
+                return;
+            }
+
+            currentUser = loginData; // ユーザー情報を保持
+
+            // 2. 認証成功後、問題データを取得
+            document.getElementById('loading-text').innerText = "問題データを読み込み中...";
             const [r1, r2] = await Promise.all([ 
                 fetch(GAS_URL + "?type=simList"), 
                 fetch(GAS_URL + "?type=cmdDict") 
             ]);
             labs = await r1.json(); 
             commandDict = await r2.json();
+
+            // 3. 画面の切り替え
             document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('selection-screen').style.display = 'flex';
+            
+            history.pushState({page: "menu"}, "");
             renderSelectionScreen();
         } catch (e) { 
-            document.getElementById('loading-overlay').innerText = "Fetch Error. GAS URLを確認してください。"; 
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('login-error').innerText = "通信エラーが発生しました。URLを確認してください。";
         }
-    };
+    }
 
     window.onpopstate = (event) => {
         if (document.getElementById('lab-screen').style.display === 'flex') {
-            if (confirm("Menuに戻りますか？現在の作業内容は消去されます。")) exitLab();
-            else history.pushState({page: "lab"}, "");
+            if (confirm("Menuに戻りますか？現在の作業内容は消去されます。")) {
+                exitLab();
+            } else {
+                history.pushState({page: "lab"}, "");
+            }
+        } else if (document.getElementById('selection-screen').style.display === 'flex') {
+            // 選択画面で戻るを押した場合はログイン画面に戻さない（または確認を出す）
+            history.pushState({page: "menu"}, "");
         }
     };
 
@@ -193,10 +263,8 @@
 
     function checkPingStatus(pingInput) {
         if (!currentLab || !currentLab.displayAnswers) return false;
-        const targetIp = pingInput.split(/\s+/)[1];
         let isConfigOk = true;
         
-        // pingの成否は、正解Configがすべて現在のConfigに含まれているかで疑似判定
         for (const dev in currentLab.displayAnswers) {
             const configText = (deviceState[dev]?.configBody || "").toLowerCase();
             currentLab.displayAnswers[dev].forEach(cmd => {
@@ -206,7 +274,6 @@
         return isConfigOk;
     }
 
-    // ★改善ポイント：no対応、変数対応、曖昧判定のスマートエンジン
     function handleCommand(input, dev) {
         const inputWords = input.trim().split(/\s+/);
         const lowInput = input.toLowerCase();
@@ -245,7 +312,7 @@
             checkInputText = input.substring(3).trim();
         }
 
-        // 3. コマンドマッチング
+        // 3. コマンドマッチング（曖昧判定・変数対応）
         let possibleMatches = [];
         let exactMatch = null;
 
@@ -263,7 +330,7 @@
                 const cw = cmdWords[i].toLowerCase(); 
                 const iw = (checkInputWords[i] || "").toLowerCase();
 
-                if (cw.startsWith("{")) continue; // 変数 {ip} 等は無条件パス
+                if (cw.startsWith("{")) continue; 
 
                 if (iw.length >= 1 && cw.startsWith(iw)) {
                     if (cw !== iw) isExact = false;
@@ -290,12 +357,13 @@
                 dev.history += (targetCmd.output || "") + "\n";
             } else if (targetCmd.type === "モード切替") {
                 if (isNoCommand) {
-                    dev.history += "% Incomplete command.\n"; // モードのnoは一旦弾く
+                    dev.history += "% Incomplete command.\n"; 
                 } else {
                     dev.currentPath.push(checkInputText);
                     let sfx = "config"; 
                     const low0 = checkInputWords[0].toLowerCase();
                     if (low0.startsWith("int")) sfx = "config-if";
+                    else if (low0.startsWith("line")) sfx = "config-line";
                     else if (low0.startsWith("rou")) sfx = "config-router";
                     else if (low0.startsWith("vla")) sfx = "config-vlan";
                     dev.prompt = activeId + "(" + sfx + ")#";
@@ -303,17 +371,14 @@
             } else if (targetCmd.type === "設定") {
                 const indent = " ".repeat(dev.currentPath.length + 1);
                 
-                // 置換キーワードを生成（ip addressなどは2語で一意にする）
                 let keyword = checkInputWords[0];
-                if (checkInputWords.length > 1 && ["ip", "ipv6", "crypto", "mac"].includes(keyword.toLowerCase())) {
+                if (checkInputWords.length > 1 && ["ip", "ipv6", "crypto", "mac", "spanning-tree", "switchport"].includes(keyword.toLowerCase())) {
                     keyword = checkInputWords[0] + " " + checkInputWords[1];
                 }
 
                 if (isNoCommand) {
-                    // 自動no処理：Configから該当行を削除
                     updateConfig(dev, dev.currentPath, keyword, "");
                 } else {
-                    // 入力された変動値（IP等）を含めてそのまま保存
                     updateConfig(dev, dev.currentPath, keyword, indent + checkInputText);
                 }
             }
@@ -325,7 +390,6 @@
 
     function updateConfig(dev, path, keyword, newLine) {
         const parent = path.length > 0 ? path[path.length - 1] : "";
-        // 判定が厳密になるよう、エスケープ等の処理を簡略化
         if (!parent) {
             const reg = new RegExp("^\\s*" + keyword + ".*", "mi");
             if (reg.test(dev.configBody)) {
@@ -334,7 +398,6 @@
                 dev.configBody += "\n" + newLine;
             }
         } else {
-            // 階層下（interface等）の更新
             const sReg = new RegExp("(" + parent + "[\\s\\S]*?)(^!|(?=^\\w))", "mi");
             if (sReg.test(dev.configBody)) {
                 dev.configBody = dev.configBody.replace(sReg, (m, c, f) => {
@@ -348,10 +411,9 @@
         }
     }
 
-    // ★改善ポイント：Config差分判定（履歴ではなく、最終的なConfigの状態をH列と比較）
     function runJudge() {
         if (!currentLab) return;
-        const displayAnswers = currentLab.displayAnswers; // H列の正解コンフィグ
+        const displayAnswers = currentLab.displayAnswers; 
         
         let score = 0, totalCriteria = 0;
         let html = `<h3>採点詳細 (正解コンフィグとの差分)</h3>`;
@@ -364,7 +426,6 @@
 
                 displayAnswers[dev].forEach(dCmd => {
                     totalCriteria++;
-                    // ConfigBodyの中に正解コマンドが存在しているかで判定
                     const isOk = configText.includes(dCmd.toLowerCase().trim());
                     if (isOk) score++;
                     
@@ -380,7 +441,6 @@
             html += "<p>表示用の正解データがありません。</p>";
         }
 
-        // スコア表示を一番上に挿入
         const scoreHtml = `
             <div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
                 <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
@@ -489,7 +549,7 @@
     function confirmJudge() { if(confirm("採点を実施しますか？")) { switchLeftTab(3); runJudge(); } }
     function downloadLog() {
         if(!confirm("ログを出力しますか？")) return;
-        let log = `CCNP Lab Log - ${currentLab.title}\n${new Date().toLocaleString()}\n`;
+        let log = `CCNP Lab Log - ${currentLab.title} (User: ${currentUser.name})\n${new Date().toLocaleString()}\n`;
         for(let d in deviceState) log += `\n[${d}]\n${deviceState[d].history}`;
         const b = new Blob([log], {type:'text/plain'}); const u = URL.createObjectURL(b);
         const a = document.createElement('a'); a.href = u; a.download = `Log_${currentLab.id}.txt`; a.click();
