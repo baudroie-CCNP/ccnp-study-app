@@ -6,80 +6,119 @@
     <title>CCNP Simulation Lab - Professional Edition</title>
     <style>
         :root {
-            --bg-dark: #1e1e1e; --card-bg: #2d2d2d; --accent: #007aff;
-            --text-color: #cccccc; --terminal-green: #00ff00; --pass: #28a745; --fail: #dc3545;
+            /* ライトテーマのカラーパレット (Google Material Design風) */
+            --bg-main: #f0f2f5; 
+            --card-bg: #ffffff; 
+            --accent: #1a73e8; /* Google Blue */
+            --accent-hover: #1557b0;
+            --text-main: #3c4043;
+            --text-muted: #5f6368;
+            --border-color: #dadce0;
+            --pass: #1e8e3e; 
+            --fail: #d93025;
+            
+            /* ターミナルはリアリティのためダークを維持 */
+            --terminal-bg: #1e1e1e; 
+            --terminal-text: #f8f8f2;
+            --terminal-green: #4af626; 
         }
-        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-dark); color: var(--text-color); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        .btn { border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: #fff; transition: 0.2s; }
-        .back-btn { background: #444; } .judge-btn { background: var(--accent); } .log-btn { background: #6c757d; }
-        .nav-btn { background: #333; border: 1px solid #555; }
-        .btn:hover { opacity: 0.8; }
 
-        /* ログイン画面 */
-        #login-screen { display: flex; height: 100vh; flex-direction: column; justify-content: center; align-items: center; }
-        .login-box { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid #444; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .login-input { width: 100%; padding: 12px; margin-bottom: 15px; box-sizing: border-box; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff; font-size: 1rem; }
-        .login-input:focus { outline: none; border-color: var(--accent); }
-
-        /* 選択画面 (初期状態は非表示) */
-        #selection-screen { display: none; height: 100vh; overflow-y: auto; padding: 40px 20px; flex-direction: column; align-items: center; }
-        .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 30px; }
-        .lab-card { background: var(--card-bg); border: 1px solid #444; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.3s; }
-        .lab-card:hover { border-color: var(--accent); transform: translateY(-3px); }
-
-        .contact-section { margin-top: 60px; padding: 30px; border-top: 1px solid #444; text-align: center; width: 100%; max-width: 800px; }
-        .contact-btn-group { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn-contact { display: inline-block; padding: 12px 24px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-size: 0.9rem; border: 1px solid #555; transition: 0.3s; }
-        .btn-contact:hover { background-color: var(--accent); border-color: var(--accent); }
-        .copyright { font-size: 0.8rem; color: #666; }
-
-        /* 演習画面 */
-        #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
-        .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
-        .split-container { display: flex; flex: 1; overflow: hidden; }
-        #left-panel { width: 35%; min-width: 250px; background: #252526; display: flex; flex-direction: column; border-right: 1px solid #111; }
-        #right-panel { flex: 1; background: #000; display: flex; flex-direction: column; overflow: hidden; }
-        .resizer { width: 6px; cursor: col-resize; background: #333; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-main); color: var(--text-main); font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; overflow: hidden; }
         
-        .tab-bar { display: flex; background: #2d2d2d; border-bottom: 1px solid #111; }
-        .tab { padding: 12px 20px; cursor: pointer; font-size: 0.8rem; border-right: 1px solid #111; color: #888; }
-        .tab.active { background: #3d3d3d; color: #fff; border-bottom: 2px solid var(--accent); }
-        .tab-content { flex: 1; padding: 20px; overflow-y: auto; display: none; line-height: 1.6; }
+        /* 汎用ボタンデザイン */
+        .btn { border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .back-btn { background: #f1f3f4; color: var(--text-main); border: 1px solid var(--border-color); }
+        .back-btn:hover { background: #e8eaed; }
+        .judge-btn { background: var(--accent); color: white; box-shadow: 0 2px 4px rgba(26,115,232,0.3); }
+        .judge-btn:hover { background: var(--accent-hover); box-shadow: 0 4px 8px rgba(26,115,232,0.4); transform: translateY(-1px); }
+        .log-btn, .nav-btn { background: #ffffff; color: var(--text-main); border: 1px solid var(--border-color); }
+        .log-btn:hover, .nav-btn:hover { background: #f8f9fa; border-color: #d2d2d2; }
+
+        /* ★① ログイン画面 (GAS/Googleライクなクリーンデザイン) */
+        #login-screen { display: flex; height: 100vh; flex-direction: column; justify-content: center; align-items: center; background-color: var(--bg-main); }
+        .login-box { background: var(--card-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--border-color); width: 100%; max-width: 360px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .login-title { margin-top: 0; color: var(--text-main); font-size: 1.5rem; margin-bottom: 24px; font-weight: 600; }
+        .login-input { width: 100%; padding: 14px 12px; margin-bottom: 16px; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--border-color); background: #fff; color: var(--text-main); font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .login-input:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+        .login-btn { width: 100%; padding: 14px; font-size: 1rem; border-radius: 4px; margin-top: 8px; }
+
+        /* ★③ スタイリッシュな選択画面 */
+        #selection-screen { display: none; height: 100vh; overflow-y: auto; padding: 0 20px 60px; flex-direction: column; align-items: center; }
+        .hero-section { text-align: center; padding: 50px 20px 30px; width: 100%; }
+        .hero-title { font-size: 2.2rem; color: var(--text-main); margin-bottom: 10px; font-weight: 800; letter-spacing: -0.5px; }
+        .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0; }
+        
+        .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; width: 100%; max-width: 1000px; margin-top: 20px; }
+        .lab-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.04); position: relative; overflow: hidden; }
+        .lab-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: var(--accent); opacity: 0; transition: 0.3s; }
+        .lab-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px rgba(0,0,0,0.08); border-color: transparent; }
+        .lab-card:hover::before { opacity: 1; }
+        .lab-badge { display: inline-block; background-color: #e8f0fe; color: var(--accent); padding: 4px 10px; border-radius: 16px; font-size: 0.75rem; font-weight: bold; margin-bottom: 12px; }
+        .lab-card-title { font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin: 0; line-height: 1.4; }
+
+        /* お問い合わせ窓口セクション */
+        .contact-section { margin-top: 60px; padding: 40px 20px; border-top: 1px solid var(--border-color); text-align: center; width: 100%; max-width: 800px; }
+        .contact-section h2 { color: var(--text-main); font-size: 1.3rem; margin-bottom: 20px; }
+        .contact-btn-group { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .btn-contact { display: inline-block; padding: 12px 24px; background-color: #ffffff; color: var(--text-main); text-decoration: none; border-radius: 24px; font-size: 0.9rem; font-weight: 600; border: 1px solid var(--border-color); transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .btn-contact:hover { background-color: #f8f9fa; border-color: var(--accent); color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.08); }
+        .copyright { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* ★② 白ベースの演習画面 */
+        #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; background: var(--bg-main); }
+        .top-nav { background: var(--card-bg); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 10; }
+        .split-container { display: flex; flex: 1; overflow: hidden; }
+        #left-panel { width: 35%; min-width: 250px; background: #fafafa; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+        #right-panel { flex: 1; background: var(--bg-main); display: flex; flex-direction: column; overflow: hidden; }
+        .resizer { width: 6px; cursor: col-resize; background: #e0e0e0; transition: background 0.2s; border-right: 1px solid var(--border-color); }
+        .resizer:hover { background: #bdbdbd; }
+        
+        .tab-bar { display: flex; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .tab { padding: 14px 20px; cursor: pointer; font-size: 0.9rem; color: var(--text-muted); font-weight: 600; transition: 0.2s; border-bottom: 2px solid transparent; }
+        .tab:hover { color: var(--accent); background-color: #f8f9fa; }
+        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+        .tab-content { flex: 1; padding: 25px; overflow-y: auto; display: none; line-height: 1.6; color: var(--text-main); }
         .tab-content.active { display: block; }
+        .tab-content h3 { color: var(--accent); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
 
-        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', monospace; overflow: hidden; }
-        .history { flex: 1; overflow-y: auto; margin-bottom: 0; white-space: pre-wrap; color: #fff; font-size: 14px; padding-bottom: 10px; }
-        .input-line { display: flex; align-items: center; border-top: 1px solid #333; padding-top: 10px; flex-shrink: 0; background: #000; }
+        /* ターミナルエリア（ここだけは黒を残す） */
+        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', 'Courier New', monospace; background-color: var(--terminal-bg); overflow: hidden; margin: 15px; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        .history { flex: 1; overflow-y: auto; margin-bottom: 0; white-space: pre-wrap; color: var(--terminal-text); font-size: 14px; padding-bottom: 10px; }
+        .input-line { display: flex; align-items: center; border-top: 1px dashed #333; padding-top: 10px; flex-shrink: 0; background: var(--terminal-bg); }
         .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
-        #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
+        #cmd-input { background: transparent; border: none; color: var(--terminal-text); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
 
-        .device-block { margin-bottom: 25px; }
-        .device-header { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; }
-        .cmd-row { display: flex; align-items: center; padding-left: 10px; margin-bottom: 6px; font-size: 0.9rem; border-bottom: 1px dashed #333; padding-bottom: 4px; }
-        .cmd-text { flex: 1; color: #bbb; }
+        /* 採点表示スタイル */
+        .device-block { margin-bottom: 25px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .device-header { color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; font-weight: bold; font-size: 1.1rem; }
+        .cmd-row { display: flex; align-items: center; padding-left: 10px; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px dashed #eee; padding-bottom: 6px; }
+        .cmd-text { flex: 1; color: var(--text-muted); font-family: 'Consolas', monospace; }
         .pass-text { color: var(--pass); font-weight: bold; }
         .fail-text { color: var(--fail); font-weight: bold; }
-        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; flex-direction: column; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; flex-direction: column; color: var(--text-main); }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">
-    <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;" id="loading-text">Loading System...</div>
+    <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: var(--accent);" id="loading-text">Loading System...</div>
 </div>
 
 <div id="login-screen">
     <div class="login-box">
-        <h2 style="margin-top:0; color:var(--accent);">システムログイン</h2>
+        <h2 class="login-title">システムログイン</h2>
         <input type="text" id="login-name" class="login-input" placeholder="ユーザーID">
-        <input type="password" id="login-pass" class="login-input" placeholder="パスワード" style="margin-bottom:20px;">
-        <button class="btn judge-btn" style="width:100%; padding:12px; font-size:1rem;" onclick="attemptLogin()">ログイン</button>
+        <input type="password" id="login-pass" class="login-input" placeholder="パスワード">
+        <button class="btn judge-btn login-btn" onclick="attemptLogin()">ログイン</button>
         <div id="login-error" style="color:var(--fail); margin-top:15px; font-size:0.9rem;"></div>
     </div>
 </div>
 
 <div id="selection-screen">
-    <h1>Simulation Lab Selection</h1>
+    <div class="hero-section">
+        <h1 class="hero-title">CCNP Simulation Lab</h1>
+        <p class="hero-subtitle">Professional Edition - 実践的ネットワーク演習環境</p>
+    </div>
     <div class="lab-grid" id="lab-list"></div>
 
     <div class="contact-section">
@@ -99,7 +138,7 @@
             <button class="btn back-btn" onclick="exitLab()">← Menu</button>
             <button class="btn nav-btn" onclick="navLab(-1)">前の問題</button>
             <button class="btn nav-btn" onclick="navLab(1)">次の問題</button>
-            <span id="active-lab-title" style="margin-left:10px; font-weight:bold;">Lab</span>
+            <span id="active-lab-title" style="margin-left:15px; font-weight:bold; font-size:1.1rem; color:var(--accent);">Lab</span>
         </div>
         <div style="display:flex; gap:10px;">
             <button class="btn log-btn" onclick="downloadLog()">ログ出力</button>
@@ -115,7 +154,7 @@
                 <div class="tab" onclick="switchLeftTab(3)">結果</div>
             </div>
             <div id="l-cnt-0" class="tab-content active"></div>
-            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%;"></div>
+            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius:4px;"></div>
             <div id="l-cnt-2" class="tab-content"></div>
             <div id="l-cnt-3" class="tab-content"><div id="judgement-display">採点ボタンを押すと結果が表示されます。</div></div>
         </div>
@@ -137,20 +176,17 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyPU0g3OuYVoEicnnTikmSYtTHC0Cgp4i_-mErWe7kEbyQbtDTvBki_1PNAhIChW2m2/exec"; // ★必ず最新のデプロイURLに書き換えてください
 
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
-    let currentUser = null; // ログインユーザー情報
+    let currentUser = null; 
 
     window.onload = () => {
-        // 初期ロード時はログイン画面を表示
         document.getElementById('loading-overlay').style.display = 'none';
         history.replaceState({page: "login"}, "");
         
-        // Enterキーでログインできるようにする
         document.getElementById('login-pass').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') attemptLogin();
         });
     };
 
-    // ★ログイン処理
     async function attemptLogin() {
         const name = document.getElementById('login-name').value;
         const pass = document.getElementById('login-pass').value;
@@ -164,7 +200,6 @@
         document.getElementById('loading-overlay').style.display = 'flex';
 
         try {
-            // 1. GASにログイン認証をリクエスト
             const loginRes = await fetch(`${GAS_URL}?type=login&name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}`);
             const loginData = await loginRes.json();
 
@@ -174,9 +209,8 @@
                 return;
             }
 
-            currentUser = loginData; // ユーザー情報を保持
+            currentUser = loginData; 
 
-            // 2. 認証成功後、問題データを取得
             document.getElementById('loading-text').innerText = "問題データを読み込み中...";
             const [r1, r2] = await Promise.all([ 
                 fetch(GAS_URL + "?type=simList"), 
@@ -185,7 +219,6 @@
             labs = await r1.json(); 
             commandDict = await r2.json();
 
-            // 3. 画面の切り替え
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('selection-screen').style.display = 'flex';
@@ -206,7 +239,6 @@
                 history.pushState({page: "lab"}, "");
             }
         } else if (document.getElementById('selection-screen').style.display === 'flex') {
-            // 選択画面で戻るを押した場合はログイン画面に戻さない（または確認を出す）
             history.pushState({page: "menu"}, "");
         }
     };
@@ -216,7 +248,11 @@
         labs.forEach(lab => {
             const card = document.createElement('div'); card.className = 'lab-card';
             card.onclick = () => startLab(lab);
-            card.innerHTML = `<span style="color:var(--accent);font-size:0.8rem;">Sim ${lab.id}</span><div style="font-weight:bold;margin-top:5px;">${lab.title}</div>`;
+            // カード内にバッジとタイトルを配置
+            card.innerHTML = `
+                <span class="lab-badge">Lab ${lab.id}</span>
+                <h3 class="lab-card-title">${lab.title}</h3>
+            `;
             list.appendChild(card);
         });
     }
@@ -279,7 +315,6 @@
         const lowInput = input.toLowerCase();
         if (inputWords[0] === "") return false;
 
-        // 1. 基本コマンド（辞書不要）
         if (lowInput === "sh run" || lowInput === "show run" || lowInput === "show running-config") {
             dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
             return true;
@@ -301,7 +336,6 @@
             return true;
         }
 
-        // 2. 'no' コマンドの自動抽出
         let isNoCommand = false;
         let checkInputWords = inputWords;
         let checkInputText = input.trim();
@@ -312,7 +346,6 @@
             checkInputText = input.substring(3).trim();
         }
 
-        // 3. コマンドマッチング（曖昧判定・変数対応）
         let possibleMatches = [];
         let exactMatch = null;
 
@@ -442,14 +475,14 @@
         }
 
         const scoreHtml = `
-            <div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
-                <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
-                <div style="font-size: 1.8rem; font-weight: bold;">${score} / ${totalCriteria}</div>
+            <div style="background: #e8f0fe; color: var(--accent); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px; border: 1px solid #d2e3fc;">
+                <div style="font-size: 0.85rem; font-weight: 600;">TOTAL SCORE</div>
+                <div style="font-size: 2rem; font-weight: 800;">${score} / ${totalCriteria}</div>
             </div>`;
         
         let tipHtml = "";
         if (currentLab.comment) {
-            tipHtml = `<div style="margin-top:20px; padding:15px; background: rgba(255,255,255,0.05); border-left:4px solid var(--accent); font-size: 0.9rem;">
+            tipHtml = `<div style="margin-top:20px; padding:15px; background: #e8f0fe; border-left:4px solid var(--accent); font-size: 0.9rem; border-radius: 0 4px 4px 0;">
                         <b style="color:var(--accent);">Tips:</b><br>${currentLab.comment.replace(/\n/g, '<br>')}
                     </div>`;
         }
