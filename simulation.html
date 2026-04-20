@@ -6,10 +6,9 @@
     <title>CCNP Simulation Lab - Professional Edition</title>
     <style>
         :root {
-            /* ライトテーマのカラーパレット (Google Material Design風) */
-            --bg-main: #f0f2f5; 
+            --bg-main: #f8f9fa; 
             --card-bg: #ffffff; 
-            --accent: #1a73e8; /* Google Blue */
+            --accent: #1a73e8; 
             --accent-hover: #1557b0;
             --text-main: #3c4043;
             --text-muted: #5f6368;
@@ -17,146 +16,125 @@
             --pass: #1e8e3e; 
             --fail: #d93025;
             
-            /* ターミナルはリアリティのためダークを維持 */
-            --terminal-bg: #1e1e1e; 
-            --terminal-text: #f8f8f2;
-            --terminal-green: #4af626; 
+            /* ターミナル設定（黒ベース・緑文字で統一） */
+            --terminal-bg: #111111; 
+            --terminal-text: #4af626; /* 視認性の高いターミナルグリーン */
         }
 
-        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-main); color: var(--text-main); font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-main); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
         
-        /* 汎用ボタンデザイン */
-        .btn { border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .btn { border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .back-btn { background: #f1f3f4; color: var(--text-main); border: 1px solid var(--border-color); }
-        .back-btn:hover { background: #e8eaed; }
-        .judge-btn { background: var(--accent); color: white; box-shadow: 0 2px 4px rgba(26,115,232,0.3); }
-        .judge-btn:hover { background: var(--accent-hover); box-shadow: 0 4px 8px rgba(26,115,232,0.4); transform: translateY(-1px); }
-        .log-btn, .nav-btn { background: #ffffff; color: var(--text-main); border: 1px solid var(--border-color); }
-        .log-btn:hover, .nav-btn:hover { background: #f8f9fa; border-color: #d2d2d2; }
+        .judge-btn { background: var(--accent); color: white; }
+        .judge-btn:hover { background: var(--accent-hover); }
 
-        /* ★① ログイン画面 (GAS/Googleライクなクリーンデザイン) */
-        #login-screen { display: flex; height: 100vh; flex-direction: column; justify-content: center; align-items: center; background-color: var(--bg-main); }
-        .login-box { background: var(--card-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--border-color); width: 100%; max-width: 360px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .login-title { margin-top: 0; color: var(--text-main); font-size: 1.5rem; margin-bottom: 24px; font-weight: 600; }
-        .login-input { width: 100%; padding: 14px 12px; margin-bottom: 16px; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--border-color); background: #fff; color: var(--text-main); font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
-        .login-input:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-        .login-btn { width: 100%; padding: 14px; font-size: 1rem; border-radius: 4px; margin-top: 8px; }
+        /* ログイン画面 & お知らせ (Googleフォーム風) */
+        #login-screen { display: flex; height: 100vh; flex-direction: column; align-items: center; background-color: #e8f0fe; overflow-y: auto; padding: 40px 0; }
+        .login-container { width: 100%; max-width: 640px; }
+        .header-banner { background: var(--accent); height: 10px; border-radius: 8px 8px 0 0; }
+        
+        .info-box { background: var(--card-bg); padding: 24px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .info-title { font-size: 1.8rem; margin: 0 0 10px 0; font-weight: 400; }
+        .notice-section { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; text-align: left; }
+        .notice-tag { background: #fce8e6; color: #d93025; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 10px; }
 
-        /* ★③ スタイリッシュな選択画面 */
+        .login-box { text-align: left; }
+        .login-label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .login-input { width: 100%; padding: 12px; margin-bottom: 20px; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--border-color); font-size: 1rem; }
+        .login-input:focus { outline: none; border: 2px solid var(--accent); margin: -1px -1px 19px -1px; }
+
+        /* 選択画面 */
         #selection-screen { display: none; height: 100vh; overflow-y: auto; padding: 0 20px 60px; flex-direction: column; align-items: center; }
-        .hero-section { text-align: center; padding: 50px 20px 30px; width: 100%; }
-        .hero-title { font-size: 2.2rem; color: var(--text-main); margin-bottom: 10px; font-weight: 800; letter-spacing: -0.5px; }
-        .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0; }
-        
-        .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; width: 100%; max-width: 1000px; margin-top: 20px; }
-        .lab-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.04); position: relative; overflow: hidden; }
-        .lab-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: var(--accent); opacity: 0; transition: 0.3s; }
-        .lab-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px rgba(0,0,0,0.08); border-color: transparent; }
-        .lab-card:hover::before { opacity: 1; }
-        .lab-badge { display: inline-block; background-color: #e8f0fe; color: var(--accent); padding: 4px 10px; border-radius: 16px; font-size: 0.75rem; font-weight: bold; margin-bottom: 12px; }
-        .lab-card-title { font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin: 0; line-height: 1.4; }
+        .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; width: 100%; max-width: 1000px; margin-top: 40px; }
+        .lab-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; transition: 0.3s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .lab-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-color: var(--accent); }
+        .lab-badge { color: var(--accent); font-size: 0.8rem; font-weight: bold; }
 
-        /* お問い合わせ窓口セクション */
-        .contact-section { margin-top: 60px; padding: 40px 20px; border-top: 1px solid var(--border-color); text-align: center; width: 100%; max-width: 800px; }
-        .contact-section h2 { color: var(--text-main); font-size: 1.3rem; margin-bottom: 20px; }
-        .contact-btn-group { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
-        .btn-contact { display: inline-block; padding: 12px 24px; background-color: #ffffff; color: var(--text-main); text-decoration: none; border-radius: 24px; font-size: 0.9rem; font-weight: 600; border: 1px solid var(--border-color); transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .btn-contact:hover { background-color: #f8f9fa; border-color: var(--accent); color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.08); }
-        .copyright { font-size: 0.85rem; color: var(--text-muted); }
-
-        /* ★② 白ベースの演習画面 */
-        #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; background: var(--bg-main); }
-        .top-nav { background: var(--card-bg); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 10; }
+        /* 演習画面 (白ベース) */
+        #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
+        .top-nav { background: white; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); }
         .split-container { display: flex; flex: 1; overflow: hidden; }
-        #left-panel { width: 35%; min-width: 250px; background: #fafafa; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
-        #right-panel { flex: 1; background: var(--bg-main); display: flex; flex-direction: column; overflow: hidden; }
-        .resizer { width: 6px; cursor: col-resize; background: #e0e0e0; transition: background 0.2s; border-right: 1px solid var(--border-color); }
-        .resizer:hover { background: #bdbdbd; }
+        #left-panel { width: 35%; background: #ffffff; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
         
-        .tab-bar { display: flex; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
-        .tab { padding: 14px 20px; cursor: pointer; font-size: 0.9rem; color: var(--text-muted); font-weight: 600; transition: 0.2s; border-bottom: 2px solid transparent; }
-        .tab:hover { color: var(--accent); background-color: #f8f9fa; }
-        .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
-        .tab-content { flex: 1; padding: 25px; overflow-y: auto; display: none; line-height: 1.6; color: var(--text-main); }
+        /* ターミナルエリア：黒背景・緑文字 */
+        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 20px; font-family: 'Consolas', 'Courier New', monospace; background-color: var(--terminal-bg); overflow: hidden; border: 1px solid var(--border-color); margin: 15px; border-radius: 4px; }
+        .history { flex: 1; overflow-y: auto; white-space: pre-wrap; color: var(--terminal-text); font-size: 15px; }
+        .input-line { display: flex; align-items: center; border-top: 1px solid #333; padding-top: 10px; flex-shrink: 0; }
+        .prompt { color: var(--terminal-text); font-weight: bold; margin-right: 8px; }
+        #cmd-input { background: transparent; border: none; color: var(--terminal-text); font-size: 1rem; outline: none; width: 100%; font-family: inherit; font-weight: bold; }
+
+        /* タブ・その他 */
+        .tab-bar { display: flex; background: white; border-bottom: 1px solid var(--border-color); }
+        .tab { padding: 14px 20px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; border-bottom: 3px solid transparent; }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { flex: 1; padding: 25px; overflow-y: auto; display: none; line-height: 1.7; }
         .tab-content.active { display: block; }
-        .tab-content h3 { color: var(--accent); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
-
-        /* ターミナルエリア（ここだけは黒を残す） */
-        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', 'Courier New', monospace; background-color: var(--terminal-bg); overflow: hidden; margin: 15px; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        .history { flex: 1; overflow-y: auto; margin-bottom: 0; white-space: pre-wrap; color: var(--terminal-text); font-size: 14px; padding-bottom: 10px; }
-        .input-line { display: flex; align-items: center; border-top: 1px dashed #333; padding-top: 10px; flex-shrink: 0; background: var(--terminal-bg); }
-        .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
-        #cmd-input { background: transparent; border: none; color: var(--terminal-text); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
-
-        /* 採点表示スタイル */
-        .device-block { margin-bottom: 25px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .device-header { color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; font-weight: bold; font-size: 1.1rem; }
-        .cmd-row { display: flex; align-items: center; padding-left: 10px; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px dashed #eee; padding-bottom: 6px; }
-        .cmd-text { flex: 1; color: var(--text-muted); font-family: 'Consolas', monospace; }
-        .pass-text { color: var(--pass); font-weight: bold; }
-        .fail-text { color: var(--fail); font-weight: bold; }
-        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; flex-direction: column; color: var(--text-main); }
+        .resizer { width: 4px; cursor: col-resize; background: #eee; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 100; flex-direction: column; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">
-    <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: var(--accent);" id="loading-text">Loading System...</div>
-</div>
+<div id="loading-overlay"><div id="loading-text" style="color:var(--accent); font-weight:bold;">Loading...</div></div>
 
 <div id="login-screen">
-    <div class="login-box">
-        <h2 class="login-title">システムログイン</h2>
-        <input type="text" id="login-name" class="login-input" placeholder="ユーザーID">
-        <input type="password" id="login-pass" class="login-input" placeholder="パスワード">
-        <button class="btn judge-btn login-btn" onclick="attemptLogin()">ログイン</button>
-        <div id="login-error" style="color:var(--fail); margin-top:15px; font-size:0.9rem;"></div>
+    <div class="login-container">
+        <div class="header-banner"></div>
+        <div class="info-box">
+            <h1 class="info-title">CCNP 虎の巻 Project</h1>
+            <p>シミュレーション演習環境へようこそ。ここでは実機に近い環境でコンフィグ設定の練習が可能です。</p>
+            <div class="notice-section">
+                <p><strong><span class="notice-tag">お知らせ</span> 2026/04/20</strong></p>
+                <p style="font-size:0.9rem; color:var(--text-muted);">
+                    ・採点エンジンをアップデートし、省略コマンドも正確に判定できるようになりました。<br>
+                    ・コンソール画面の視認性を高めるため、ターミナルグリーンを採用しました。
+                </p>
+            </div>
+        </div>
+
+        <div class="info-box login-box">
+            <label class="login-label">ユーザーID</label>
+            <input type="text" id="login-name" class="login-input" placeholder="あなたの回答">
+            <label class="login-label">パスワード</label>
+            <input type="password" id="login-pass" class="login-input" placeholder="あなたの回答">
+            <button class="btn judge-btn" style="padding: 10px 30px;" onclick="attemptLogin()">ログイン</button>
+            <div id="login-error" style="color:var(--fail); margin-top:15px; font-size:0.9rem;"></div>
+        </div>
+        
+        <p style="font-size:0.75rem; color:var(--text-muted); text-align:center;">コンテンツを保護するため、ログインが必要です。&copy; 2026 CCNP 虎の巻</p>
     </div>
 </div>
 
 <div id="selection-screen">
-    <div class="hero-section">
-        <h1 class="hero-title">CCNP Simulation Lab</h1>
-        <p class="hero-subtitle">Professional Edition - 実践的ネットワーク演習環境</p>
+    <div style="text-align:center; padding: 40px 0;">
+        <h1 style="font-size:2rem; font-weight:400;">演習問題を選択</h1>
+        <p style="color:var(--text-muted);">現在のレベルに合わせたシナリオを選択してください。</p>
     </div>
     <div class="lab-grid" id="lab-list"></div>
-
-    <div class="contact-section">
-        <h2>お問い合わせ窓口</h2>
-        <div class="contact-btn-group">
-            <a href="https://docs.google.com/forms/d/フォームのID/viewform" target="_blank" rel="noopener noreferrer" class="btn-contact">不具合報告 / 機能改善リクエスト</a>
-            <a href="https://docs.google.com/document/d/ドキュメントのID/edit" target="_blank" rel="noopener noreferrer" class="btn-contact">本番試験前の注意事項</a>              
-            <a href="https://docs.google.com/forms/d/フォームのID/viewform" target="_blank" rel="noopener noreferrer" class="btn-contact">試験後フィードバック</a>
-        </div>
-        <div class="copyright">&copy; 2026 CCNP 虎の巻 Project</div>
-    </div>
 </div>
 
 <div id="lab-screen">
     <div class="top-nav">
         <div style="display:flex; gap:10px; align-items:center;">
-            <button class="btn back-btn" onclick="exitLab()">← Menu</button>
-            <button class="btn nav-btn" onclick="navLab(-1)">前の問題</button>
-            <button class="btn nav-btn" onclick="navLab(1)">次の問題</button>
-            <span id="active-lab-title" style="margin-left:15px; font-weight:bold; font-size:1.1rem; color:var(--accent);">Lab</span>
+            <button class="btn back-btn" onclick="exitLab()">← 戻る</button>
+            <span id="active-lab-title" style="margin-left:15px; font-weight:bold; color:var(--accent);">Lab</span>
         </div>
         <div style="display:flex; gap:10px;">
-            <button class="btn log-btn" onclick="downloadLog()">ログ出力</button>
-            <button class="btn judge-btn" onclick="confirmJudge()">採点</button>
+            <button class="btn judge-btn" onclick="confirmJudge()">採点実行</button>
         </div>
     </div>
     <div class="split-container">
         <div id="left-panel">
             <div class="tab-bar">
-                <div class="tab active" onclick="switchLeftTab(0)">問題文</div>
+                <div class="tab active" onclick="switchLeftTab(0)">問題</div>
                 <div class="tab" onclick="switchLeftTab(1)">構成図</div>
                 <div class="tab" onclick="switchLeftTab(2)">タスク</div>
-                <div class="tab" onclick="switchLeftTab(3)">結果</div>
+                <div class="tab" onclick="switchLeftTab(3)">採点結果</div>
             </div>
             <div id="l-cnt-0" class="tab-content active"></div>
-            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius:4px;"></div>
+            <div id="l-cnt-1" class="tab-content" style="text-align:center;"><img id="sim-diagram" src="" style="max-width:100%; border:1px solid #eee;"></div>
             <div id="l-cnt-2" class="tab-content"></div>
-            <div id="l-cnt-3" class="tab-content"><div id="judgement-display">採点ボタンを押すと結果が表示されます。</div></div>
+            <div id="l-cnt-3" class="tab-content"><div id="judgement-display">採点待ち...</div></div>
         </div>
         <div class="resizer" id="dragMe"></div>
         <div id="right-panel">
@@ -173,425 +151,258 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyPU0g3OuYVoEicnnTikmSYtTHC0Cgp4i_-mErWe7kEbyQbtDTvBki_1PNAhIChW2m2/exec"; // ★必ず最新のデプロイURLに書き換えてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyPU0g3OuYVoEicnnTikmSYtTHC0Cgp4i_-mErWe7kEbyQbtDTvBki_1PNAhIChW2m2/exec"; // ★GASのデプロイURLをここに貼る
 
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
-    let currentUser = null; 
 
     window.onload = () => {
         document.getElementById('loading-overlay').style.display = 'none';
-        history.replaceState({page: "login"}, "");
-        
-        document.getElementById('login-pass').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') attemptLogin();
-        });
+        document.getElementById('login-pass').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
     };
 
     async function attemptLogin() {
         const name = document.getElementById('login-name').value;
         const pass = document.getElementById('login-pass').value;
-        
-        if (!name || !pass) {
-            document.getElementById('login-error').innerText = "ユーザーIDとパスワードを入力してください";
-            return;
-        }
+        if (!name || !pass) { document.getElementById('login-error').innerText = "未入力の項目があります"; return; }
 
-        document.getElementById('loading-text').innerText = "認証中...";
         document.getElementById('loading-overlay').style.display = 'flex';
-
         try {
-            const loginRes = await fetch(`${GAS_URL}?type=login&name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}`);
-            const loginData = await loginRes.json();
-
-            if (!loginData.success) {
+            const res = await fetch(`${GAS_URL}?type=login&name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}`);
+            const data = await res.json();
+            if (!data.success) {
                 document.getElementById('loading-overlay').style.display = 'none';
-                document.getElementById('login-error').innerText = loginData.error;
+                document.getElementById('login-error').innerText = data.error;
                 return;
             }
-
-            currentUser = loginData; 
-
-            document.getElementById('loading-text').innerText = "問題データを読み込み中...";
-            const [r1, r2] = await Promise.all([ 
-                fetch(GAS_URL + "?type=simList"), 
-                fetch(GAS_URL + "?type=cmdDict") 
-            ]);
-            labs = await r1.json(); 
-            commandDict = await r2.json();
-
+            const [r1, r2] = await Promise.all([fetch(GAS_URL+"?type=simList"), fetch(GAS_URL+"?type=cmdDict")]);
+            labs = await r1.json(); commandDict = await r2.json();
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('selection-screen').style.display = 'flex';
-            
-            history.pushState({page: "menu"}, "");
             renderSelectionScreen();
         } catch (e) { 
             document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('login-error').innerText = "通信エラーが発生しました。URLを確認してください。";
+            alert("通信エラー。URLが正しいか確認してください。");
         }
     }
-
-    window.onpopstate = (event) => {
-        if (document.getElementById('lab-screen').style.display === 'flex') {
-            if (confirm("Menuに戻りますか？現在の作業内容は消去されます。")) {
-                exitLab();
-            } else {
-                history.pushState({page: "lab"}, "");
-            }
-        } else if (document.getElementById('selection-screen').style.display === 'flex') {
-            history.pushState({page: "menu"}, "");
-        }
-    };
 
     function renderSelectionScreen() {
         const list = document.getElementById('lab-list'); list.innerHTML = '';
         labs.forEach(lab => {
             const card = document.createElement('div'); card.className = 'lab-card';
             card.onclick = () => startLab(lab);
-            // カード内にバッジとタイトルを配置
-            card.innerHTML = `
-                <span class="lab-badge">Lab ${lab.id}</span>
-                <h3 class="lab-card-title">${lab.title}</h3>
-            `;
+            card.innerHTML = `<span class="lab-badge">演習 ${lab.id}</span><h3 style="margin:10px 0 0 0;">${lab.title}</h3>`;
             list.appendChild(card);
         });
     }
 
     function startLab(lab) {
         currentLab = lab;
-        history.pushState({page: "lab"}, "");
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('lab-screen').style.display = 'flex';
         document.getElementById('active-lab-title').innerText = lab.title;
-        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${(lab.desc||"").replace(/\n/g,'<br>')}</p>`;
-        document.getElementById('l-cnt-2').innerHTML = `<h3>Tasks</h3><p>${(lab.task||"").replace(/\n/g,'<br>')}</p>`;
+        document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${lab.desc.replace(/\n/g,'<br>')}</p>`;
+        document.getElementById('l-cnt-2').innerHTML = `<h3>タスク</h3><p>${lab.task.replace(/\n/g,'<br>')}</p>`;
         document.getElementById('sim-diagram').src = `simulation/sim${lab.id}.png`;
-        document.getElementById('judgement-display').innerText = "採点ボタンを押すと結果が表示されます。";
-
+        
         const tabsEl = document.getElementById('device-tabs'); tabsEl.innerHTML = '';
         deviceState = {};
         lab.devices.forEach((dev, idx) => {
             const name = dev.trim();
             deviceState[name] = { 
-                history: `${name} Console ---\n`, 
+                history: `${name} Console 接続完了...\n`, 
                 prompt: `${name}>`, 
                 configBody: lab.initialConfigs[name] || "!", 
-                currentPath: [], 
-                currentInput: "",
-                cmdHistory: [],
-                historyIndex: -1
+                currentPath: [], cmdHistory: [], historyIndex: -1 
             };
-            const t = document.createElement('div');
-            t.className = "tab " + (idx === 0 ? "active" : "");
+            const t = document.createElement('div'); t.className = "tab " + (idx === 0 ? "active" : "");
             t.innerText = name; t.onclick = () => switchDevice(name);
             tabsEl.appendChild(t);
         });
         switchDevice(lab.devices[0].trim());
     }
 
-    function navLab(direction) {
-        const currentIndex = labs.findIndex(l => l.id === currentLab.id);
-        const nextIndex = currentIndex + direction;
-        if (nextIndex >= 0 && nextIndex < labs.length) {
-            if (confirm("別の問題に移動しますか？現在の履歴は失われます。")) startLab(labs[nextIndex]);
-        } else alert("これ以上問題はありません。");
+    // ★完全一致による正確な採点ロジック（誤判定防止）
+    function runJudge() {
+        if (!currentLab) return;
+        const displayAnswers = currentLab.displayAnswers; 
+        let score = 0, total = 0;
+        let html = `<div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px; text-align:center;">`;
+
+        if (displayAnswers && typeof displayAnswers === 'object') {
+            for (const dev in displayAnswers) {
+                html += `<div style="font-weight:bold; color:var(--accent); margin-top:15px;">■ ${dev}</div>`;
+                // Configを1行ずつ分割（完全一致用）
+                const currentLines = (deviceState[dev]?.configBody || "").split('\n').map(l => l.trim().toLowerCase());
+
+                displayAnswers[dev].forEach(ansCmd => {
+                    total++;
+                    const target = ansCmd.trim().toLowerCase();
+                    const isOk = currentLines.includes(target); // 完全一致判定
+                    if (isOk) score++;
+                    html += `<div style="font-size:0.9rem; padding:4px 10px; border-bottom:1px dashed #ddd; display:flex; justify-content:space-between;">
+                                <span>└ ${ansCmd}</span>
+                                <span style="color:${isOk?'var(--pass)':'var(--fail)'}; font-weight:bold;">${isOk?'○':'×'}</span>
+                             </div>`;
+                });
+            }
+        }
+        const scoreHtml = `<div style="font-size:1.5rem; font-weight:bold;">SCORE: ${score} / ${total}</div></div>`;
+        document.getElementById('judgement-display').innerHTML = scoreHtml + html + (currentLab.comment ? `<div style="margin-top:20px; color:var(--text-muted); font-size:0.85rem;">解説: ${currentLab.comment}</div>` : "");
     }
 
-    function checkPingStatus(pingInput) {
-        if (!currentLab || !currentLab.displayAnswers) return false;
-        let isConfigOk = true;
-        
-        for (const dev in currentLab.displayAnswers) {
-            const configText = (deviceState[dev]?.configBody || "").toLowerCase();
-            currentLab.displayAnswers[dev].forEach(cmd => {
-                if (!configText.includes(cmd.toLowerCase().trim())) isConfigOk = false;
-            });
+    // ★省略形をフルスペルに変換する魔法の関数
+    function reconstructCommand(dictPattern, userWords) {
+        const dictWords = dictPattern.split(/\s+/);
+        let result = [];
+        for (let i = 0; i < dictWords.length; i++) {
+            if (dictWords[i].startsWith("{")) {
+                let val = userWords[i];
+                if (val) {
+                    // インターフェースの省略形（g0/0など）をフルスペルに自動展開
+                    val = val.replace(/^(g|gi|gig)(?=\d|\/)/i, "GigabitEthernet");
+                    val = val.replace(/^(f|fa|fas)(?=\d|\/)/i, "FastEthernet");
+                    val = val.replace(/^(s|se|ser)(?=\d|\/)/i, "Serial");
+                    val = val.replace(/^(te|ten|tengig)(?=\d|\/)/i, "TenGigabitEthernet");
+                    result.push(val);
+                }
+            } else {
+                // 辞書の正しいスペルを使用
+                result.push(dictWords[i]);
+            }
         }
-        return isConfigOk;
+        return result.join(" ");
     }
 
     function handleCommand(input, dev) {
-        const inputWords = input.trim().split(/\s+/);
-        const lowInput = input.toLowerCase();
-        if (inputWords[0] === "") return false;
+        const words = input.trim().split(/\s+/);
+        const low = input.toLowerCase();
+        if (words[0] === "") return false;
 
-        if (lowInput === "sh run" || lowInput === "show run" || lowInput === "show running-config") {
+        if (low === "sh run" || low === "show run" || low.startsWith("show run")) {
             dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
             return true;
         }
-        if (lowInput.startsWith("ping")) {
-            const targetIp = inputWords[1] || "unknown";
-            dev.history += `Type escape sequence to abort.\nSending 5, 100-byte ICMP Echos to ${targetIp}, timeout is 2 seconds:\n`;
-            setTimeout(() => {
-                const success = checkPingStatus(lowInput);
-                dev.history += success ? "!!!!!" : ".....";
-                dev.history += `\nSuccess rate is ${success ? "100" : "0"} percent.\n${dev.prompt}`;
-                renderTerminal();
-            }, 600);
-            return true;
-        }
-        if (lowInput === "end") {
-            dev.currentPath = [];
-            dev.prompt = activeId + "#";
-            return true;
-        }
+        if (low === "end") { dev.currentPath = []; dev.prompt = activeId + "#"; return true; }
 
-        let isNoCommand = false;
-        let checkInputWords = inputWords;
-        let checkInputText = input.trim();
-        
-        if (lowInput.startsWith("no ")) {
-            isNoCommand = true;
-            checkInputWords = inputWords.slice(1);
-            checkInputText = input.substring(3).trim();
-        }
+        let isNo = false; let checkWords = words; let checkText = input.trim();
+        if (low.startsWith("no ")) { isNo = true; checkWords = words.slice(1); checkText = input.substring(3).trim(); }
 
-        let possibleMatches = [];
-        let exactMatch = null;
-
+        let matches = [];
         for (let cmd of commandDict) {
-            const cmdWords = cmd.pattern.split(/\s+/);
-            const isCorrectPrompt = (!cmd.prompt || cmd.prompt.toLowerCase() === "any" || dev.prompt.includes(cmd.prompt));
-            if (!isCorrectPrompt) continue;
-
-            let isMatch = true;
-            let isExact = true;
-
-            if (cmdWords.length !== checkInputWords.length && !cmd.pattern.includes("{")) continue;
-
-            for (let i = 0; i < cmdWords.length; i++) {
-                const cw = cmdWords[i].toLowerCase(); 
-                const iw = (checkInputWords[i] || "").toLowerCase();
-
-                if (cw.startsWith("{")) continue; 
-
-                if (iw.length >= 1 && cw.startsWith(iw)) {
-                    if (cw !== iw) isExact = false;
-                    continue;
-                }
-                isMatch = false; break;
+            const cw = cmd.pattern.split(/\s+/);
+            if (cw.length !== checkWords.length && !cmd.pattern.includes("{")) continue;
+            let match = true;
+            for (let i = 0; i < cw.length; i++) {
+                if (cw[i].startsWith("{")) continue;
+                if (!cw[i].toLowerCase().startsWith((checkWords[i] || "").toLowerCase())) { match = false; break; }
             }
-
-            if (isMatch) {
-                possibleMatches.push(cmd);
-                if (isExact) exactMatch = cmd;
-            }
+            if (match) matches.push(cmd);
         }
 
-        let targetCmd = exactMatch || (possibleMatches.length === 1 ? possibleMatches[0] : null);
+        if (matches.length > 1) { dev.history += `% Ambiguous command: "${input}"\n`; return true; }
+        if (matches.length === 1) {
+            const target = matches[0];
+            // 省略形をフルスペルに変換！
+            const reconstructed = reconstructCommand(target.pattern, checkWords);
 
-        if (possibleMatches.length > 1 && !exactMatch) {
-            dev.history += `% Ambiguous command:  "${input}"\n`;
-            return true; 
-        }
-
-        if (targetCmd) {
-            if (targetCmd.type === "表示") {
-                dev.history += (targetCmd.output || "") + "\n";
-            } else if (targetCmd.type === "モード切替") {
-                if (isNoCommand) {
-                    dev.history += "% Incomplete command.\n"; 
-                } else {
-                    dev.currentPath.push(checkInputText);
+            if (target.type === "表示") {
+                dev.history += (target.output || "") + "\n";
+            } else if (target.type === "モード切替") {
+                if (isNo) { dev.history += "% Incomplete command.\n"; } 
+                else {
+                    dev.currentPath.push(reconstructed);
                     let sfx = "config"; 
-                    const low0 = checkInputWords[0].toLowerCase();
-                    if (low0.startsWith("int")) sfx = "config-if";
-                    else if (low0.startsWith("line")) sfx = "config-line";
-                    else if (low0.startsWith("rou")) sfx = "config-router";
-                    else if (low0.startsWith("vla")) sfx = "config-vlan";
+                    if (checkWords[0].toLowerCase().startsWith("int")) sfx = "config-if";
+                    else if (checkWords[0].toLowerCase().startsWith("rou")) sfx = "config-router";
+                    else if (checkWords[0].toLowerCase().startsWith("vla")) sfx = "config-vlan";
+                    else if (checkWords[0].toLowerCase().startsWith("line")) sfx = "config-line";
                     dev.prompt = activeId + "(" + sfx + ")#";
                 }
-            } else if (targetCmd.type === "設定") {
+            } else {
                 const indent = " ".repeat(dev.currentPath.length + 1);
-                
-                let keyword = checkInputWords[0];
-                if (checkInputWords.length > 1 && ["ip", "ipv6", "crypto", "mac", "spanning-tree", "switchport"].includes(keyword.toLowerCase())) {
-                    keyword = checkInputWords[0] + " " + checkInputWords[1];
+                const reconWords = reconstructed.split(" ");
+                let keyword = reconWords[0];
+                if (reconWords.length > 1 && ["ip", "ipv6", "crypto", "mac", "spanning-tree", "switchport", "vrrp", "standby", "channel-group"].includes(keyword.toLowerCase())) {
+                    keyword = reconWords[0] + " " + reconWords[1];
                 }
-
-                if (isNoCommand) {
-                    updateConfig(dev, dev.currentPath, keyword, "");
-                } else {
-                    updateConfig(dev, dev.currentPath, keyword, indent + checkInputText);
-                }
+                updateConfig(dev, dev.currentPath, keyword, isNo ? "" : indent + reconstructed);
             }
             return true;
         }
-
         return false;
     }
 
-    function updateConfig(dev, path, keyword, newLine) {
+    function updateConfig(dev, path, key, line) {
         const parent = path.length > 0 ? path[path.length - 1] : "";
+        const reg = new RegExp("^\\s*" + key + ".*", "mi");
         if (!parent) {
-            const reg = new RegExp("^\\s*" + keyword + ".*", "mi");
-            if (reg.test(dev.configBody)) {
-                dev.configBody = (newLine==="") ? dev.configBody.replace(reg, "").trim() : dev.configBody.replace(reg, newLine);
-            } else if (newLine !== "") {
-                dev.configBody += "\n" + newLine;
-            }
+            if (reg.test(dev.configBody)) dev.configBody = line === "" ? dev.configBody.replace(reg, "").trim() : dev.configBody.replace(reg, line);
+            else if (line !== "") dev.configBody += "\n" + line;
         } else {
             const sReg = new RegExp("(" + parent + "[\\s\\S]*?)(^!|(?=^\\w))", "mi");
             if (sReg.test(dev.configBody)) {
                 dev.configBody = dev.configBody.replace(sReg, (m, c, f) => {
-                    const lReg = new RegExp("^\\s*" + keyword + ".*", "mi");
-                    if (lReg.test(c)) return (newLine==="") ? c.replace(lReg, "").trimEnd() + "\n" + f : c.replace(lReg, newLine) + f;
-                    else return newLine !== "" ? c.trimEnd() + "\n" + newLine + "\n" + f : c + f;
+                    if (reg.test(c)) return line === "" ? c.replace(reg, "").trimEnd() + "\n" + f : c.replace(reg, line) + f;
+                    else return line !== "" ? c.trimEnd() + "\n" + line + "\n" + f : c + f;
                 });
-            } else if (newLine !== "") {
-                dev.configBody = dev.configBody.trimEnd() + "\n" + path.join("\n ") + "\n " + newLine + "\n!\n";
+            } else if (line !== "") {
+                dev.configBody = dev.configBody.trimEnd() + "\n" + path.join("\n ") + "\n " + line + "\n!\n";
             }
         }
-    }
-
-    function runJudge() {
-        if (!currentLab) return;
-        const displayAnswers = currentLab.displayAnswers; 
-        
-        let score = 0, totalCriteria = 0;
-        let html = `<h3>採点詳細 (正解コンフィグとの差分)</h3>`;
-
-        if (displayAnswers && typeof displayAnswers === 'object' && Object.keys(displayAnswers).length > 0) {
-            for (const dev in displayAnswers) {
-                html += `<div class="device-block"><div class="device-header">■ ${dev}</div>`;
-                
-                const configText = (deviceState[dev]?.configBody || "").toLowerCase();
-
-                displayAnswers[dev].forEach(dCmd => {
-                    totalCriteria++;
-                    const isOk = configText.includes(dCmd.toLowerCase().trim());
-                    if (isOk) score++;
-                    
-                    html += `
-                    <div class="cmd-row">
-                        <span class="cmd-text">└ ${dCmd}</span>
-                        <span class="${isOk ? 'pass-text' : 'fail-text'}" style="width:30px; text-align:right;">${isOk ? '○' : '×'}</span>
-                    </div>`;
-                });
-                html += '</div>';
-            }
-        } else {
-            html += "<p>表示用の正解データがありません。</p>";
-        }
-
-        const scoreHtml = `
-            <div style="background: #e8f0fe; color: var(--accent); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px; border: 1px solid #d2e3fc;">
-                <div style="font-size: 0.85rem; font-weight: 600;">TOTAL SCORE</div>
-                <div style="font-size: 2rem; font-weight: 800;">${score} / ${totalCriteria}</div>
-            </div>`;
-        
-        let tipHtml = "";
-        if (currentLab.comment) {
-            tipHtml = `<div style="margin-top:20px; padding:15px; background: #e8f0fe; border-left:4px solid var(--accent); font-size: 0.9rem; border-radius: 0 4px 4px 0;">
-                        <b style="color:var(--accent);">Tips:</b><br>${currentLab.comment.replace(/\n/g, '<br>')}
-                    </div>`;
-        }
-        document.getElementById('judgement-display').innerHTML = scoreHtml + html + tipHtml;
     }
 
     document.getElementById('cmd-input').addEventListener('keydown', e => {
         const dev = deviceState[activeId];
-        const inputEl = e.target;
-        const val = inputEl.value;
-
         if (e.key === 'Enter') {
-            const trimmedVal = val.trim();
-            const low = trimmedVal.toLowerCase();
-
-            if (trimmedVal !== "") dev.cmdHistory.push(trimmedVal);
-            dev.historyIndex = dev.cmdHistory.length;
-
-            if (trimmedVal === "") {
-                dev.history += dev.prompt + "\n";
-            } else {
-                dev.history += dev.prompt + " " + trimmedVal + "\n";
+            const val = e.target.value.trim();
+            dev.history += dev.prompt + " " + val + "\n";
+            if (val !== "") {
+                dev.cmdHistory.push(val); dev.historyIndex = dev.cmdHistory.length;
+                const low = val.toLowerCase();
                 if (low === "en" || low === "enable") dev.prompt = activeId + "#";
-                else if (low === "conf t" || low === "configure terminal") { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
+                else if (low === "conf t" || low.startsWith("conf t")) { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
                 else if (low === "exit") {
-                    if (dev.currentPath.length > 0) { dev.currentPath.pop(); dev.prompt = activeId + (dev.currentPath.length > 0 ? "(config-pmap)#" : "(config)#"); }
-                    else dev.prompt = dev.prompt.includes("(config)") ? activeId + "#" : activeId + ">";
-                } else { 
-                    if (!handleCommand(trimmedVal, dev)) dev.history += "% Unknown command or computer name, or unable to find computer address\n"; 
+                    if (dev.currentPath.length > 0) { dev.currentPath.pop(); dev.prompt = activeId + (dev.currentPath.length>0?"(config-if)#":"(config)#"); }
+                    else dev.prompt = activeId + (dev.prompt.includes("#") ? "#" : ">");
+                } else if (!handleCommand(val, dev)) {
+                    dev.history += "% Unknown command.\n";
                 }
             }
-            inputEl.value = ""; 
-            renderTerminal();
+            e.target.value = ""; renderTerminal();
+        } else if (e.key === 'ArrowUp') {
+            if (dev.historyIndex > 0) { dev.historyIndex--; e.target.value = dev.cmdHistory[dev.historyIndex]; }
             e.preventDefault();
-        }
-        else if (e.key === 'ArrowUp') {
+        } else if (e.key === 'ArrowDown') {
+            if (dev.historyIndex < dev.cmdHistory.length - 1) { dev.historyIndex++; e.target.value = dev.cmdHistory[dev.historyIndex]; }
+            else { dev.historyIndex = dev.cmdHistory.length; e.target.value = ""; }
             e.preventDefault();
-            if (dev.cmdHistory.length > 0 && dev.historyIndex > 0) {
-                dev.historyIndex--;
-                inputEl.value = dev.cmdHistory[dev.historyIndex];
-            }
-        }
-        else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (dev.historyIndex < dev.cmdHistory.length - 1) {
-                dev.historyIndex++;
-                inputEl.value = dev.cmdHistory[dev.historyIndex];
-            } else {
-                dev.historyIndex = dev.cmdHistory.length;
-                inputEl.value = ""; 
-            }
-        }
-        else if (e.key === 'Tab') {
-            e.preventDefault(); 
-            if (val.trim() === "") return;
-
-            const basics = ["enable", "configure terminal", "exit", "end", "show running-config", "ping", "no", "interface", "ip address"];
-            let matches = basics.filter(c => c.startsWith(val.toLowerCase()));
-
-            for (let cmd of commandDict) {
-                let cleanCmd = cmd.pattern.replace(/\{.*?\}/g, "").trim(); 
-                if (cleanCmd.toLowerCase().startsWith(val.toLowerCase()) && !matches.includes(cleanCmd)) {
-                    matches.push(cleanCmd);
-                }
-            }
-
-            if (matches.length === 1) {
-                inputEl.value = matches[0] + " "; 
-            }
         }
     });
 
-    function switchDevice(id) { 
-        if(activeId) deviceState[activeId].currentInput = document.getElementById('cmd-input').value; 
-        activeId = id; 
-        document.querySelectorAll('#device-tabs .tab').forEach(t => {
-            t.classList.toggle('active', t.innerText === id);
-        });
-        renderTerminal(); 
+    function switchDevice(id) {
+        if (activeId) deviceState[activeId].currentInput = document.getElementById('cmd-input').value;
+        activeId = id;
+        document.querySelectorAll('#device-tabs .tab').forEach(t => t.classList.toggle('active', t.innerText === id));
+        renderTerminal();
     }
 
     function renderTerminal() {
         const dev = deviceState[activeId];
-        const historyEl = document.getElementById('terminal-history');
-        historyEl.innerText = dev.history;
+        const his = document.getElementById('terminal-history');
+        his.innerText = dev.history;
         document.getElementById('current-prompt').innerText = dev.prompt;
         document.getElementById('cmd-input').value = dev.currentInput || "";
-        
-        setTimeout(() => { historyEl.scrollTop = historyEl.scrollHeight; }, 0);
+        setTimeout(() => his.scrollTop = his.scrollHeight, 0);
         document.getElementById('cmd-input').focus();
     }
 
-    function switchLeftTab(idx) {
-        document.querySelectorAll('#left-panel .tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-        document.querySelectorAll('#left-panel .tab-content').forEach((c, i) => c.classList.toggle('active', i === idx));
+    function switchLeftTab(i) {
+        document.querySelectorAll('#left-panel .tab').forEach((t, j) => t.classList.toggle('active', i === j));
+        document.querySelectorAll('#left-panel .tab-content').forEach((c, j) => c.classList.toggle('active', i === j));
     }
-    function confirmJudge() { if(confirm("採点を実施しますか？")) { switchLeftTab(3); runJudge(); } }
-    function downloadLog() {
-        if(!confirm("ログを出力しますか？")) return;
-        let log = `CCNP Lab Log - ${currentLab.title} (User: ${currentUser.name})\n${new Date().toLocaleString()}\n`;
-        for(let d in deviceState) log += `\n[${d}]\n${deviceState[d].history}`;
-        const b = new Blob([log], {type:'text/plain'}); const u = URL.createObjectURL(b);
-        const a = document.createElement('a'); a.href = u; a.download = `Log_${currentLab.id}.txt`; a.click();
-    }
-    function exitLab() { 
-        document.getElementById('selection-screen').style.display='flex'; 
-        document.getElementById('lab-screen').style.display='none'; 
-        history.pushState({page: "menu"}, "");
-    }
+    function confirmJudge() { if (confirm("採点を実施しますか？")) { switchLeftTab(3); runJudge(); } }
+    function exitLab() { document.getElementById('selection-screen').style.display = 'flex'; document.getElementById('lab-screen').style.display = 'none'; }
     const resizer = document.getElementById('dragMe');
     resizer.onmousedown = (e) => {
         document.onmousemove = (ev) => { let w = (ev.clientX/window.innerWidth)*100; if(w>15 && w<70) document.getElementById('left-panel').style.width = w+'%'; };
