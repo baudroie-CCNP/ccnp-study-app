@@ -15,20 +15,17 @@
         .nav-btn { background: #333; border: 1px solid #555; }
         .btn:hover { opacity: 0.8; }
 
-        /* 選択画面 */
         #selection-screen { height: 100vh; overflow-y: auto; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
         .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-top: 30px; }
         .lab-card { background: var(--card-bg); border: 1px solid #444; border-radius: 12px; padding: 20px; cursor: pointer; transition: 0.3s; }
         .lab-card:hover { border-color: var(--accent); transform: translateY(-3px); }
 
-        /* お問い合わせ窓口セクション */
         .contact-section { margin-top: 60px; padding: 30px; border-top: 1px solid #444; text-align: center; width: 100%; max-width: 800px; }
         .contact-btn-group { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .btn-contact { display: inline-block; padding: 12px 24px; background-color: #333; color: #fff; text-decoration: none; border-radius: 6px; font-size: 0.9rem; border: 1px solid #555; transition: 0.3s; }
         .btn-contact:hover { background-color: var(--accent); border-color: var(--accent); }
         .copyright { font-size: 0.8rem; color: #666; }
 
-        /* 演習画面 */
         #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
         .top-nav { background: #111; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
         .split-container { display: flex; flex: 1; overflow: hidden; }
@@ -42,14 +39,12 @@
         .tab-content { flex: 1; padding: 20px; overflow-y: auto; display: none; line-height: 1.6; }
         .tab-content.active { display: block; }
 
-        /* ターミナルエリア */
         .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', monospace; overflow: hidden; }
         .history { flex: 1; overflow-y: auto; margin-bottom: 0; white-space: pre-wrap; color: #fff; font-size: 14px; padding-bottom: 10px; }
         .input-line { display: flex; align-items: center; border-top: 1px solid #333; padding-top: 10px; flex-shrink: 0; background: #000; }
         .prompt { color: var(--terminal-green); font-weight: bold; margin-right: 8px; }
         #cmd-input { background: transparent; border: none; color: var(--terminal-green); font-size: 1rem; outline: none; width: 100%; font-family: inherit; }
 
-        /* 採点表示スタイル */
         .device-block { margin-bottom: 25px; }
         .device-header { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; }
         .cmd-row { display: flex; align-items: center; padding-left: 10px; margin-bottom: 6px; font-size: 0.9rem; border-bottom: 1px dashed #333; padding-bottom: 4px; }
@@ -141,11 +136,8 @@
 
     window.onpopstate = (event) => {
         if (document.getElementById('lab-screen').style.display === 'flex') {
-            if (confirm("Menuに戻りますか？現在の作業内容は消去されます。")) {
-                exitLab();
-            } else {
-                history.pushState({page: "lab"}, "");
-            }
+            if (confirm("Menuに戻りますか？現在の作業内容は消去されます。")) exitLab();
+            else history.pushState({page: "lab"}, "");
         }
     };
 
@@ -200,31 +192,31 @@
     }
 
     function checkPingStatus(pingInput) {
-        if (!currentLab || !currentLab.answers) return false;
-        const allAnswers = currentLab.answers.split(',').map(s => s.trim());
-        const configCriteria = allAnswers.filter(item => !item.split(':')[1].toLowerCase().startsWith("ping"));
-        let configScore = 0;
-        configCriteria.forEach(jItem => {
-            const [dev, jCmd] = jItem.split(':');
-            if (deviceState[dev]?.history.toLowerCase().includes(jCmd.toLowerCase())) configScore++;
-        });
-        const isConfigComplete = configScore === configCriteria.length;
-        const isTargetCorrect = allAnswers.some(ans => ans.toLowerCase().includes(pingInput.toLowerCase()));
-        return isConfigComplete && isTargetCorrect;
+        if (!currentLab || !currentLab.displayAnswers) return false;
+        const targetIp = pingInput.split(/\s+/)[1];
+        let isConfigOk = true;
+        
+        // pingの成否は、正解Configがすべて現在のConfigに含まれているかで疑似判定
+        for (const dev in currentLab.displayAnswers) {
+            const configText = (deviceState[dev]?.configBody || "").toLowerCase();
+            currentLab.displayAnswers[dev].forEach(cmd => {
+                if (!configText.includes(cmd.toLowerCase().trim())) isConfigOk = false;
+            });
+        }
+        return isConfigOk;
     }
 
-    // ★修正箇所：曖昧（Ambiguous）コマンドの判定ロジック実装
+    // ★改善ポイント：no対応、変数対応、曖昧判定のスマートエンジン
     function handleCommand(input, dev) {
         const inputWords = input.trim().split(/\s+/);
         const lowInput = input.toLowerCase();
         if (inputWords[0] === "") return false;
 
-        // 基本コマンド
+        // 1. 基本コマンド（辞書不要）
         if (lowInput === "sh run" || lowInput === "show run" || lowInput === "show running-config") {
             dev.history += "Building configuration...\n\n" + dev.configBody + "\n";
             return true;
         }
-
         if (lowInput.startsWith("ping")) {
             const targetIp = inputWords[1] || "unknown";
             dev.history += `Type escape sequence to abort.\nSending 5, 100-byte ICMP Echos to ${targetIp}, timeout is 2 seconds:\n`;
@@ -236,32 +228,42 @@
             }, 600);
             return true;
         }
-
         if (lowInput === "end") {
             dev.currentPath = [];
             dev.prompt = activeId + "#";
             return true;
         }
 
+        // 2. 'no' コマンドの自動抽出
+        let isNoCommand = false;
+        let checkInputWords = inputWords;
+        let checkInputText = input.trim();
+        
+        if (lowInput.startsWith("no ")) {
+            isNoCommand = true;
+            checkInputWords = inputWords.slice(1);
+            checkInputText = input.substring(3).trim();
+        }
+
+        // 3. コマンドマッチング
         let possibleMatches = [];
         let exactMatch = null;
 
         for (let cmd of commandDict) {
             const cmdWords = cmd.pattern.split(/\s+/);
-            const isCorrectPrompt = (cmd.prompt.toLowerCase() === "any" || dev.prompt.includes(cmd.prompt));
+            const isCorrectPrompt = (!cmd.prompt || cmd.prompt.toLowerCase() === "any" || dev.prompt.includes(cmd.prompt));
             if (!isCorrectPrompt) continue;
 
             let isMatch = true;
             let isExact = true;
 
-            // 長さのチェック（変数が含まれるコマンドは除外）
-            if (cmdWords.length !== inputWords.length && !cmd.pattern.includes("{")) continue;
+            if (cmdWords.length !== checkInputWords.length && !cmd.pattern.includes("{")) continue;
 
             for (let i = 0; i < cmdWords.length; i++) {
                 const cw = cmdWords[i].toLowerCase(); 
-                const iw = (inputWords[i] || "").toLowerCase();
+                const iw = (checkInputWords[i] || "").toLowerCase();
 
-                if (cw.startsWith("{")) continue; // 変数（{ip}など）はチェックをスキップ
+                if (cw.startsWith("{")) continue; // 変数 {ip} 等は無条件パス
 
                 if (iw.length >= 1 && cw.startsWith(iw)) {
                     if (cw !== iw) isExact = false;
@@ -276,37 +278,44 @@
             }
         }
 
-        let targetCmd = null;
+        let targetCmd = exactMatch || (possibleMatches.length === 1 ? possibleMatches[0] : null);
 
-        // 判定：完全一致があれば優先、複数あれば曖昧エラー
-        if (exactMatch) {
-            targetCmd = exactMatch;
-        } else if (possibleMatches.length === 1) {
-            targetCmd = possibleMatches[0];
-        } else if (possibleMatches.length > 1) {
-            // 曖昧な場合のエラー出力（実機同様）
+        if (possibleMatches.length > 1 && !exactMatch) {
             dev.history += `% Ambiguous command:  "${input}"\n`;
             return true; 
         }
 
-        // コマンドの実行
         if (targetCmd) {
-            const cmd = targetCmd;
-            const cmdWords = cmd.pattern.split(/\s+/);
-            if (cmd.type === "表示") dev.history += (cmd.output || "") + "\n";
-            else if (cmd.type === "モード切替") {
-                dev.currentPath.push(input);
-                let sfx = "config"; const low0 = inputWords[0].toLowerCase();
-                if (low0.startsWith("int")) sfx = "config-if";
-                else if (low0.startsWith("rou")) sfx = "config-router";
-                else if (low0.startsWith("pol")) sfx = "config-pmap";
-                else if (low0.startsWith("cla")) sfx = "config-pmap-c";
-                else if (low0.startsWith("vla")) sfx = "config-vlan";
-                dev.prompt = activeId + "(" + sfx + ")#";
-            } else if (cmd.type === "設定") {
+            if (targetCmd.type === "表示") {
+                dev.history += (targetCmd.output || "") + "\n";
+            } else if (targetCmd.type === "モード切替") {
+                if (isNoCommand) {
+                    dev.history += "% Incomplete command.\n"; // モードのnoは一旦弾く
+                } else {
+                    dev.currentPath.push(checkInputText);
+                    let sfx = "config"; 
+                    const low0 = checkInputWords[0].toLowerCase();
+                    if (low0.startsWith("int")) sfx = "config-if";
+                    else if (low0.startsWith("rou")) sfx = "config-router";
+                    else if (low0.startsWith("vla")) sfx = "config-vlan";
+                    dev.prompt = activeId + "(" + sfx + ")#";
+                }
+            } else if (targetCmd.type === "設定") {
                 const indent = " ".repeat(dev.currentPath.length + 1);
-                if (inputWords[0].toLowerCase() === "no") updateConfig(dev, dev.currentPath, cmdWords[1], "");
-                else updateConfig(dev, dev.currentPath, cmdWords[0], indent + input);
+                
+                // 置換キーワードを生成（ip addressなどは2語で一意にする）
+                let keyword = checkInputWords[0];
+                if (checkInputWords.length > 1 && ["ip", "ipv6", "crypto", "mac"].includes(keyword.toLowerCase())) {
+                    keyword = checkInputWords[0] + " " + checkInputWords[1];
+                }
+
+                if (isNoCommand) {
+                    // 自動no処理：Configから該当行を削除
+                    updateConfig(dev, dev.currentPath, keyword, "");
+                } else {
+                    // 入力された変動値（IP等）を含めてそのまま保存
+                    updateConfig(dev, dev.currentPath, keyword, indent + checkInputText);
+                }
             }
             return true;
         }
@@ -316,57 +325,49 @@
 
     function updateConfig(dev, path, keyword, newLine) {
         const parent = path.length > 0 ? path[path.length - 1] : "";
+        // 判定が厳密になるよう、エスケープ等の処理を簡略化
         if (!parent) {
-            const reg = new RegExp("^" + keyword + ".*", "m");
-            if (reg.test(dev.configBody)) dev.configBody = (newLine==="") ? dev.configBody.replace(reg, "").trim() : dev.configBody.replace(reg, newLine);
-            else dev.configBody += "\n" + newLine;
+            const reg = new RegExp("^\\s*" + keyword + ".*", "mi");
+            if (reg.test(dev.configBody)) {
+                dev.configBody = (newLine==="") ? dev.configBody.replace(reg, "").trim() : dev.configBody.replace(reg, newLine);
+            } else if (newLine !== "") {
+                dev.configBody += "\n" + newLine;
+            }
         } else {
-            const sReg = new RegExp("(" + parent + "[\\s\\S]*?)(^!|(?=^\\w))", "m");
+            // 階層下（interface等）の更新
+            const sReg = new RegExp("(" + parent + "[\\s\\S]*?)(^!|(?=^\\w))", "mi");
             if (sReg.test(dev.configBody)) {
                 dev.configBody = dev.configBody.replace(sReg, (m, c, f) => {
-                    const lReg = new RegExp("^\\s*" + keyword + ".*", "m");
+                    const lReg = new RegExp("^\\s*" + keyword + ".*", "mi");
                     if (lReg.test(c)) return (newLine==="") ? c.replace(lReg, "").trimEnd() + "\n" + f : c.replace(lReg, newLine) + f;
-                    else return c.trimEnd() + "\n" + newLine + "\n" + f;
+                    else return newLine !== "" ? c.trimEnd() + "\n" + newLine + "\n" + f : c + f;
                 });
-            } else {
+            } else if (newLine !== "") {
                 dev.configBody = dev.configBody.trimEnd() + "\n" + path.join("\n ") + "\n " + newLine + "\n!\n";
             }
         }
     }
 
+    // ★改善ポイント：Config差分判定（履歴ではなく、最終的なConfigの状態をH列と比較）
     function runJudge() {
-        if (!currentLab || !currentLab.answers) return;
-        
-        const judgeList = currentLab.answers.split(',').map(s => s.trim());
-        const displayAnswers = currentLab.displayAnswers; 
+        if (!currentLab) return;
+        const displayAnswers = currentLab.displayAnswers; // H列の正解コンフィグ
         
         let score = 0, totalCriteria = 0;
-        const deviceData = {}; 
-
-        judgeList.forEach(jItem => {
-            if (jItem.startsWith("[")) return; 
-            const parts = jItem.split(':');
-            if (parts.length < 2) return;
-            const dev = parts[0].trim();
-            const jCmd = parts[1].trim();
-            totalCriteria++;
-            if (deviceState[dev]?.history.toLowerCase().includes(jCmd.toLowerCase())) {
-                score++;
-            }
-        });
-
-        let html = `
-            <div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
-                <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
-                <div style="font-size: 1.8rem; font-weight: bold;">${score} / ${totalCriteria}</div>
-            </div>
-            <h3>採点詳細 (正解コンフィグ)</h3>`;
+        let html = `<h3>採点詳細 (正解コンフィグとの差分)</h3>`;
 
         if (displayAnswers && typeof displayAnswers === 'object' && Object.keys(displayAnswers).length > 0) {
             for (const dev in displayAnswers) {
                 html += `<div class="device-block"><div class="device-header">■ ${dev}</div>`;
+                
+                const configText = (deviceState[dev]?.configBody || "").toLowerCase();
+
                 displayAnswers[dev].forEach(dCmd => {
-                    const isOk = deviceState[dev]?.history.toLowerCase().includes(dCmd.toLowerCase());
+                    totalCriteria++;
+                    // ConfigBodyの中に正解コマンドが存在しているかで判定
+                    const isOk = configText.includes(dCmd.toLowerCase().trim());
+                    if (isOk) score++;
+                    
                     html += `
                     <div class="cmd-row">
                         <span class="cmd-text">└ ${dCmd}</span>
@@ -379,12 +380,20 @@
             html += "<p>表示用の正解データがありません。</p>";
         }
 
+        // スコア表示を一番上に挿入
+        const scoreHtml = `
+            <div style="background: #333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
+                <div style="font-size: 0.8rem; color: #888;">TOTAL SCORE</div>
+                <div style="font-size: 1.8rem; font-weight: bold;">${score} / ${totalCriteria}</div>
+            </div>`;
+        
+        let tipHtml = "";
         if (currentLab.comment) {
-            html += `<div style="margin-top:20px; padding:15px; background: rgba(255,255,255,0.05); border-left:4px solid var(--accent); font-size: 0.9rem;">
+            tipHtml = `<div style="margin-top:20px; padding:15px; background: rgba(255,255,255,0.05); border-left:4px solid var(--accent); font-size: 0.9rem;">
                         <b style="color:var(--accent);">Tips:</b><br>${currentLab.comment.replace(/\n/g, '<br>')}
                     </div>`;
         }
-        document.getElementById('judgement-display').innerHTML = html;
+        document.getElementById('judgement-display').innerHTML = scoreHtml + html + tipHtml;
     }
 
     document.getElementById('cmd-input').addEventListener('keydown', e => {
@@ -396,9 +405,7 @@
             const trimmedVal = val.trim();
             const low = trimmedVal.toLowerCase();
 
-            if (trimmedVal !== "") {
-                dev.cmdHistory.push(trimmedVal);
-            }
+            if (trimmedVal !== "") dev.cmdHistory.push(trimmedVal);
             dev.historyIndex = dev.cmdHistory.length;
 
             if (trimmedVal === "") {
@@ -449,7 +456,6 @@
                 }
             }
 
-            // ★修正箇所：候補が1つの時だけ補完する（曖昧な場合は何もしない）
             if (matches.length === 1) {
                 inputEl.value = matches[0] + " "; 
             }
@@ -472,10 +478,7 @@
         document.getElementById('current-prompt').innerText = dev.prompt;
         document.getElementById('cmd-input').value = dev.currentInput || "";
         
-        setTimeout(() => {
-            historyEl.scrollTop = historyEl.scrollHeight;
-        }, 0);
-
+        setTimeout(() => { historyEl.scrollTop = historyEl.scrollHeight; }, 0);
         document.getElementById('cmd-input').focus();
     }
 
