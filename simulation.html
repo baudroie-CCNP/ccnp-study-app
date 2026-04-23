@@ -34,7 +34,7 @@
         .info-box { background: var(--card-bg); padding: 24px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .info-title { font-size: 1.8rem; margin: 0 0 10px 0; font-weight: 400; }
         .notice-section { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; text-align: left; }
-        .notice-tag { background: #fce8e6; color: #d93025; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .notice-tag { background: #fce8e6; color: #d93025; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-right: 10px; }
 
         .login-box { text-align: left; }
         .login-label { display: block; margin-bottom: 8px; font-weight: 500; }
@@ -152,9 +152,10 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyFt-i4wPZDFbX5FxNO4D-Pbla_WbzScmS20XYcmsKxk4AJZ4J5YGJV9_-KEFpxbqN7/exec"; // ★GASのデプロイURLをここに貼る
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyCnJ7ygbnLL5_DMzlmIZJvb8x73ezkmdLodE4_f8qyiuThsU_oNpgD2mX8b6SRUtw/exec"; // ★GASのデプロイURLをここに貼る
 
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
+    let currentUser = null; // ログインユーザー情報を保持する変数
 
     window.onload = async () => {
         try {
@@ -182,6 +183,9 @@
                 document.getElementById('login-error').innerText = data.error;
                 return;
             }
+            
+            currentUser = data; // ★ログイン成功時にユーザー情報を保存
+
             const [r1, r2] = await Promise.all([fetch(GAS_URL+"?type=simList"), fetch(GAS_URL+"?type=cmdDict")]);
             labs = await r1.json(); commandDict = await r2.json();
             document.getElementById('loading-overlay').style.display = 'none';
@@ -214,7 +218,7 @@
         deviceState = {};
         lab.devices.forEach((dev, idx) => {
             const name = dev.trim();
-            deviceState[name] = { history: `${name} Console 接続...\n`, prompt: `${name}>`, configBody: lab.initialConfigs[name] || "!", currentPath: [], cmdHistory: [], historyIndex: -1 };
+            deviceState[name] = { history: `${name} Console 接続...\n`, prompt: `${name}>`, configBody: lab.initialConfigs[name] || "!", currentPath: [], cmdHistory: [], historyIndex: -1, typedCommands: [] };
             const t = document.createElement('div'); t.className = "tab " + (idx === 0 ? "active" : "");
             t.innerText = name; t.onclick = () => switchDevice(name);
             tabsEl.appendChild(t);
@@ -236,27 +240,69 @@
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `Log_Lab${currentLab.id}.txt`; a.click();
     }
 
+    // 採点実行
     function runJudge() {
         if (!currentLab) return;
         const displayAnswers = currentLab.displayAnswers; 
         let score = 0, total = 0;
         let html = `<div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px; text-align:center;">`;
 
-        for (const dev in displayAnswers) {
-            html += `<div style="font-weight:bold; color:var(--accent); margin-top:15px;">■ ${dev}</div>`;
-            const currentLines = (deviceState[dev]?.configBody || "").split('\n').map(l => l.trim().toLowerCase());
-            displayAnswers[dev].forEach(ansCmd => {
-                total++;
-                const target = ansCmd.trim().toLowerCase();
-                const isOk = currentLines.includes(target);
-                if (isOk) score++;
-                html += `<div style="font-size:0.9rem; padding:4px 10px; border-bottom:1px dashed #ddd; display:flex; justify-content:space-between;">
-                            <span>└ ${ansCmd}</span>
-                            <span style="color:${isOk?'var(--pass)':'var(--fail)'}; font-weight:bold;">${isOk?'○':'×'}</span>
-                         </div>`;
-            });
+        if (displayAnswers && typeof displayAnswers === 'object') {
+            for (const dev in displayAnswers) {
+                html += `<div style="font-weight:bold; color:var(--accent); margin-top:15px;">■ ${dev}</div>`;
+                
+                const currentLines = (deviceState[dev]?.configBody || "").split('\n').map(l => l.trim().toLowerCase().replace(/\s+/g, ' '));
+                const initialLines = (currentLab.initialConfigs[dev] || "").split('\n').map(l => l.trim().toLowerCase().replace(/\s+/g, ' '));
+                const typed = deviceState[dev].typedCommands || [];
+
+                displayAnswers[dev].forEach(ansCmd => {
+                    total++;
+                    const target = ansCmd.trim().toLowerCase().replace(/\s+/g, ' ');
+                    let isOk = false;
+
+                    const isNonConfig = ["no ", "ping ", "copy ", "clear ", "write ", "wr "].some(prefix => target.startsWith(prefix)) || target === "wr";
+
+                    if (isNonConfig) {
+                        if (typed.includes(target)) isOk = true;
+                    } else {
+                        const inConfig = currentLines.includes(target);
+                        const inInitial = initialLines.includes(target);
+                        const isTyped = typed.includes(target);
+
+                        if (inConfig) {
+                            if (!inInitial) {
+                                isOk = true; 
+                            } else {
+                                if (isTyped) isOk = true; 
+                            }
+                        }
+                    }
+
+                    if (isOk) score++;
+                    html += `<div style="font-size:0.9rem; padding:4px 10px; border-bottom:1px dashed #ddd; display:flex; justify-content:space-between;">
+                                <span>└ ${ansCmd}</span>
+                                <span style="color:${isOk?'var(--pass)':'var(--fail)'}; font-weight:bold;">${isOk?'○':'×'}</span>
+                             </div>`;
+                });
+            }
         }
-        document.getElementById('judgement-display').innerHTML = `<h3>SCORE: ${score} / ${total}</h3>` + html + `</div>`;
+        const scoreHtml = `<div style="font-size:1.5rem; font-weight:bold;">SCORE: ${score} / ${total}</div></div>`;
+        document.getElementById('judgement-display').innerHTML = scoreHtml + html + (currentLab.comment ? `<div style="margin-top:20px; color:var(--text-muted); font-size:0.85rem;">解説: ${currentLab.comment}</div>` : "");
+
+        // ★採点完了時にログ送信処理を呼び出す
+        sendStudyLog(score, total);
+    }
+
+    // ★ログ送信処理
+    async function sendStudyLog(score, total) {
+        if (!currentUser) return; // ログインしていなければ送信しない
+        try {
+            // encodeURIComponent を使ってURLに安全な形式に変換して送信
+            const url = `${GAS_URL}?type=saveLog&company=${encodeURIComponent(currentUser.company)}&userName=${encodeURIComponent(currentUser.name)}&labId=${encodeURIComponent(currentLab.id)}&labTitle=${encodeURIComponent(currentLab.title)}&score=${score}&total=${total}`;
+            fetch(url).catch(e => console.log("ログ送信エラー:", e));
+        } catch (e) {
+            console.error("ログ送信処理中にエラーが発生しました:", e);
+        }
     }
 
     function reconstructCommand(dictPattern, userWords) {
@@ -281,10 +327,31 @@
         const words = input.trim().split(/\s+/);
         const low = input.toLowerCase();
         if (words[0] === "") return false;
-        if (low === "sh run" || low === "show run" || low.startsWith("show run")) { dev.history += "Building config...\n\n" + dev.configBody + "\n"; return true; }
-        if (low === "end") { dev.currentPath = []; dev.prompt = activeId + "#"; return true; }
+
+        if (low === "sh run" || low === "show run" || low.startsWith("show run")) { 
+            dev.typedCommands.push("show running-config");
+            dev.history += "Building config...\n\n" + dev.configBody + "\n"; 
+            return true; 
+        }
+        if (low === "end") { 
+            dev.typedCommands.push("end");
+            dev.currentPath = []; dev.prompt = activeId + "#"; 
+            return true; 
+        }
+        if (low.startsWith("ping")) { 
+            dev.typedCommands.push(low.replace(/\s+/g, ' '));
+            const targetIp = words[1] || "unknown";
+            dev.history += `Type escape sequence to abort.\nSending 5, 100-byte ICMP Echos to ${targetIp}, timeout is 2 seconds:\n`;
+            setTimeout(() => {
+                dev.history += "!!!!!\nSuccess rate is 100 percent.\n" + dev.prompt;
+                renderTerminal();
+            }, 600);
+            return true;
+        }
+
         let isNo = false; let checkWords = words; let checkText = input.trim();
         if (low.startsWith("no ")) { isNo = true; checkWords = words.slice(1); checkText = input.substring(3).trim(); }
+        
         let matches = [];
         for (let cmd of commandDict) {
             const cw = cmd.pattern.split(/\s+/);
@@ -296,10 +363,15 @@
             }
             if (match) matches.push(cmd);
         }
+
         if (matches.length > 1) { dev.history += `% Ambiguous command\n`; return true; }
         if (matches.length === 1) {
             const target = matches[0];
             const reconstructed = reconstructCommand(target.pattern, checkWords);
+            
+            const normalizedCmd = (isNo ? "no " : "") + reconstructed;
+            dev.typedCommands.push(normalizedCmd.toLowerCase().replace(/\s+/g, ' '));
+
             if (target.type === "表示") { dev.history += (target.output || "") + "\n"; }
             else if (target.type === "モード切替") {
                 if (isNo) { dev.history += "% Incomplete command.\n"; } 
@@ -350,10 +422,18 @@
             dev.history += dev.prompt + " " + val + "\n";
             if (val !== "") {
                 dev.cmdHistory.push(val); dev.historyIndex = dev.cmdHistory.length;
-                const low = val.toLowerCase();
-                if (low === "en" || low === "enable") dev.prompt = activeId + "#";
-                else if (low === "conf t" || low.startsWith("conf t")) { dev.prompt = activeId + "(config)#"; dev.currentPath = []; }
+                const low = val.toLowerCase().replace(/\s+/g, ' ');
+                
+                if (low === "en" || low === "enable") { 
+                    dev.typedCommands.push("enable");
+                    dev.prompt = activeId + "#"; 
+                }
+                else if (low === "conf t" || low.startsWith("conf t")) { 
+                    dev.typedCommands.push("configure terminal");
+                    dev.prompt = activeId + "(config)#"; dev.currentPath = []; 
+                }
                 else if (low === "exit") {
+                    dev.typedCommands.push("exit");
                     if (dev.currentPath.length > 0) { dev.currentPath.pop(); dev.prompt = activeId + (dev.currentPath.length>0?"(config-if)#":"(config)#"); }
                     else dev.prompt = activeId + ">";
                 } else if (!handleCommand(val, dev)) { dev.history += "% Unknown command.\n"; }
