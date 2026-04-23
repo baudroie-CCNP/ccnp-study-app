@@ -48,12 +48,13 @@
 
         /* 演習画面 */
         #lab-screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
-        .top-nav { background: white; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); gap: 10px; }
-        .split-container { display: flex; flex: 1; overflow: hidden; }
-        #left-panel { width: 35%; background: #ffffff; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+        .top-nav { background: white; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); gap: 10px; flex-wrap: wrap; }
+        .split-container { display: flex; flex: 1; overflow: hidden; height: 100%; }
+        #left-panel { width: 35%; background: #ffffff; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); height: 100%; }
+        #right-panel { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg-main); }
         
         /* ターミナル */
-        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', monospace; background-color: var(--terminal-bg); overflow: hidden; border: 1px solid var(--border-color); margin: 15px; border-radius: 4px; }
+        .terminal-wrapper { flex: 1; display: flex; flex-direction: column; padding: 15px; font-family: 'Consolas', monospace; background-color: var(--terminal-bg); overflow: hidden; border: 1px solid var(--border-color); margin: 15px; border-radius: 4px; box-sizing: border-box; }
         .history { flex: 1; overflow-y: auto; white-space: pre-wrap; color: var(--terminal-text); font-size: 14px; }
         .input-line { display: flex; align-items: center; border-top: 1px solid #333; padding-top: 10px; }
         #cmd-input { background: transparent; border: none; color: var(--terminal-text); font-size: 1rem; outline: none; width: 100%; font-family: inherit; font-weight: bold; }
@@ -65,18 +66,22 @@
         .tab-content.active { display: block; }
         .resizer { width: 4px; cursor: col-resize; background: #eee; }
 
+        /* スマホ用レイアウト調整 */
         @media (max-width: 768px) {
             .split-container { flex-direction: column; }
             #left-panel { width: 100% !important; height: 40%; border-right: none; border-bottom: 1px solid var(--border-color); }
-            .top-nav { padding: 8px 10px; flex-wrap: wrap; }
-            .nav-controls { order: 3; width: 100%; justify-content: space-between; display: flex; margin-top: 5px; }
+            #right-panel { width: 100% !important; height: 60%; }
+            .terminal-wrapper { margin: 10px; } /* 余白を詰めて広くする */
+            .top-nav { padding: 8px 10px; }
             .resizer { display: none; }
         }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay" style="display:none;"><div id="loading-text" style="color:var(--accent); font-weight:bold;">Loading...</div></div>
+<div id="loading-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; justify-content:center; align-items:center; z-index:100;">
+    <div id="loading-text" style="color:var(--accent); font-weight:bold; font-size:1.2rem;">Loading System...</div>
+</div>
 
 <div id="login-screen">
     <div class="login-container">
@@ -86,7 +91,7 @@
             <p>シミュレーション演習環境へようこそ。</p>
             <div class="notice-section">
                 <p><strong><span class="notice-tag">お知らせ</span></strong></p>
-                <div id="notice-content" style="font-size:0.9rem; color:var(--text-muted);">
+                <div id="notice-content" style="font-size:0.9rem; color:var(--text-muted); line-height:1.6;">
                     読み込み中...
                 </div>
             </div>
@@ -96,7 +101,7 @@
             <input type="text" id="login-name" class="login-input" placeholder="あなたの回答">
             <label class="login-label">パスワード</label>
             <input type="password" id="login-pass" class="login-input" placeholder="あなたの回答">
-            <button class="btn judge-btn" onclick="attemptLogin()">ログイン</button>
+            <button class="btn judge-btn" onclick="attemptLogin()" style="padding: 10px 30px;">ログイン</button>
             <div id="login-error" style="color:var(--fail); margin-top:15px; font-size:0.9rem;"></div>
         </div>
     </div>
@@ -109,13 +114,13 @@
 
 <div id="lab-screen">
     <div class="top-nav">
-        <div style="display:flex; gap:10px; align-items:center;">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
             <button class="btn back-btn" onclick="exitLab()">← 戻る</button>
-            <span id="active-lab-title" style="font-weight:bold; color:var(--accent); display:none; border: none;"></span>
-        </div>
-        <div class="nav-controls" style="display:flex; gap:5px;">
             <button class="btn secondary-btn" onclick="navLab(-1)">前の問題</button>
             <button class="btn secondary-btn" onclick="navLab(1)">次の問題</button>
+            <span id="active-lab-title" style="font-weight:bold; color:var(--accent); margin-left: 10px;">Lab</span>
+        </div>
+        <div style="display:flex; gap:10px;">
             <button class="btn secondary-btn" onclick="downloadLog()">ログ出力</button>
             <button class="btn judge-btn" onclick="confirmJudge()">採点実行</button>
         </div>
@@ -139,8 +144,8 @@
             <div class="terminal-wrapper">
                 <div id="terminal-history" class="history"></div>
                 <div class="input-line">
-                    <span id="current-prompt" class="prompt" style="color:var(--terminal-text);">R1></span>
-                    <input type="text" id="cmd-input" autofocus autocomplete="off" spellcheck="false">
+                    <span id="current-prompt" class="prompt">R1></span>
+                    <input type="text" id="cmd-input" autofocus autocomplete="off" spellcheck="false" autocapitalize="off">
                 </div>
             </div>
         </div>
@@ -148,25 +153,27 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzzxfui1ZxxKFRDuDMg1JXg0ON8OzByHv-kkI7BDlv6kKGLRPo0q2dyT3FQ0qXzI2kG/exec"; // ★GASのURLを貼ってください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxv_QDR5jXQFB0ZatVA9SLy_PD_kZVdLmiwNzBeVYgyIg1c1J1KAlZXMnE0Qe_Lp10E/exec"; // ★GASのデプロイURLをここに貼る
 
     let labs = [], commandDict = [], currentLab = null, deviceState = {}, activeId = '';
 
     window.onload = async () => {
-        // 初期状態でお知らせを取得
+        // ★初期状態でお知らせを取得して画面にセット
         try {
             const res = await fetch(`${GAS_URL}?type=notice`);
             const data = await res.json();
             document.getElementById('notice-content').innerHTML = data.content;
         } catch(e) {
-            document.getElementById('notice-content').innerText = "お知らせの取得に失敗しました。";
+            document.getElementById('notice-content').innerText = "お知らせの取得に失敗しました。URLを確認してください。";
         }
+        document.getElementById('loading-overlay').style.display = 'none';
+        document.getElementById('login-pass').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
     };
 
     async function attemptLogin() {
         const name = document.getElementById('login-name').value;
         const pass = document.getElementById('login-pass').value;
-        if (!name || !pass) return;
+        if (!name || !pass) { document.getElementById('login-error').innerText = "未入力の項目があります"; return; }
 
         document.getElementById('loading-overlay').style.display = 'flex';
         try {
@@ -200,6 +207,7 @@
         currentLab = lab;
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('lab-screen').style.display = 'flex';
+        document.getElementById('active-lab-title').innerText = lab.title;
         document.getElementById('l-cnt-0').innerHTML = `<h3>概要</h3><p>${lab.desc.replace(/\n/g,'<br>')}</p>`;
         document.getElementById('l-cnt-2').innerHTML = `<h3>タスク</h3><p>${lab.task.replace(/\n/g,'<br>')}</p>`;
         document.getElementById('sim-diagram').src = `simulation/sim${lab.id}.png`;
@@ -219,7 +227,7 @@
     function navLab(direction) {
         const idx = labs.findIndex(l => l.id === currentLab.id);
         const next = labs[idx + direction];
-        if (next) { if(confirm("次の問題へ移動しますか？")) startLab(next); }
+        if (next) { if(confirm("別の問題へ移動しますか？")) startLab(next); }
         else alert("これ以上問題はありません。");
     }
 
@@ -229,9 +237,6 @@
         const b = new Blob([log], {type:'text/plain'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `Log_Lab${currentLab.id}.txt`; a.click();
     }
-
-    // --- 以降、前回の handleCommand, updateConfig, runJudge ロジックをそのまま維持 ---
-    // (省略: 文字数制限のため、前回のロジック部分をそのまま貼り付けてください)
 
     function runJudge() {
         if (!currentLab) return;
@@ -305,13 +310,15 @@
                     let sfx = "config"; 
                     if (checkWords[0].toLowerCase().startsWith("int")) sfx = "config-if";
                     else if (checkWords[0].toLowerCase().startsWith("rou")) sfx = "config-router";
+                    else if (checkWords[0].toLowerCase().startsWith("vla")) sfx = "config-vlan";
+                    else if (checkWords[0].toLowerCase().startsWith("line")) sfx = "config-line";
                     dev.prompt = activeId + "(" + sfx + ")#";
                 }
             } else {
                 const indent = " ".repeat(dev.currentPath.length + 1);
                 const reconWords = reconstructed.split(" ");
                 let keyword = reconWords[0];
-                if (reconWords.length > 1 && ["ip", "ipv6", "spanning-tree", "switchport"].includes(keyword.toLowerCase())) keyword = reconWords[0] + " " + reconWords[1];
+                if (reconWords.length > 1 && ["ip", "ipv6", "spanning-tree", "switchport", "vrrp", "standby", "channel-group", "clock", "snmp-server"].includes(keyword.toLowerCase())) keyword = reconWords[0] + " " + reconWords[1];
                 updateConfig(dev, dev.currentPath, keyword, isNo ? "" : indent + reconstructed);
             }
             return true;
